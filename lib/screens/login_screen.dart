@@ -1,3 +1,4 @@
+import 'package:fe/core/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -5,7 +6,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final TokenStorage tokenStorage;
+  const LoginScreen({super.key, required this.tokenStorage});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -62,7 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
       // 3) 홈 화면으로 이동 (이전 스택 모두 제거)
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(tokenStorage: widget.tokenStorage),
+          ),
               (route) => false,
         );
       }

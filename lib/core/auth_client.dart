@@ -8,10 +8,22 @@ class AuthClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final token = await TokenStorage.accessToken;
+    String? token;
+    try {
+      token = await TokenStorage.accessToken;
+    } catch (e) {
+      print('TokenStorage error: $e');
+    }
+
+    print('AuthClient -> ${request.method} ${request.url}');
+    print('AuthClient BEFORE headers: ${request.headers}');
+    print('AuthClient token: $token');
+
     if (token != null && token.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer $token';
     }
+
+    print('AuthClient AFTER headers: ${request.headers}');
     return _inner.send(request);
   }
 }

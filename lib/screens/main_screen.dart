@@ -1,3 +1,4 @@
+import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/login_screen.dart';
 import 'package:fe/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
@@ -114,7 +115,7 @@ class AuthScreen extends StatelessWidget {
                 color: const Color(0xFF6AA84F),
                 textColor: Colors.white,
                 onPressed: () {
-                  navigateWithFadePush(context, const LoginScreen());
+                  navigateWithFadePush(context, LoginScreen(tokenStorage: TokenStorage()));
                 },
               ),
               const SizedBox(height: 12),

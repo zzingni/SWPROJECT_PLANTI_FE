@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fe/core/auth_client.dart';
+import 'package:fe/core/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -10,11 +11,13 @@ import 'home_screen.dart';
 class PlantWateringScheduleScreen extends StatefulWidget {
   final int selectedPlantId;
   final String plantName;
+  final TokenStorage tokenStorage;
 
   const PlantWateringScheduleScreen({
     super.key,
     required this.selectedPlantId,
     required this.plantName,
+    required this.tokenStorage,
   });
 
   @override
@@ -186,10 +189,11 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
 
     // 1. plantData 생성
     final plantData = {
-      'plantType': widget.selectedPlantId,
+      'plantId': widget.selectedPlantId,
       'plantName': widget.plantName,
-      'wateringCycle': _convertScheduleToBackendFormat(_selectedSchedule),
-      // 필요하면 온도, 습도 등 다른 데이터 추가
+      if (_selectedSchedule !=
+          null) 'wateringCycle': _convertScheduleToBackendFormat(
+          _selectedSchedule),
     };
 
     try {
@@ -198,8 +202,10 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
       if (response.statusCode == 200 || response.statusCode == 201) {
         // 성공 - 백엔드 응답 파싱
         try {
-          final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-          final plantNickName = responseData['plantNickName'] as String? ?? widget.plantName;
+          final responseData = jsonDecode(response.body) as Map<String,
+              dynamic>;
+          final plantNickName = responseData['plantNickName'] as String? ??
+              widget.plantName;
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -213,12 +219,14 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
               MaterialPageRoute(
                 builder: (context) =>
                     HomeScreen(
-                      plantType: widget.selectedPlantId!,
-                      plantName: plantNickName,  // 백엔드에서 받은 plantNickName 사용
+                      plantId: widget.selectedPlantId,
+                      nickname: plantNickName,
+                      // 백엔드에서 받은 plantNickName 사용
                       wateringCycle: _convertScheduleToBackendFormat(
                           _selectedSchedule),
                       optimalTemperature: 25,
                       optimalHumidity: 43,
+                      tokenStorage: widget.tokenStorage,
                     ),
               ),
                   (route) => false,
@@ -238,12 +246,13 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
               MaterialPageRoute(
                 builder: (context) =>
                     HomeScreen(
-                      plantType: widget.selectedPlantId,
-                      plantName: widget.plantName,
+                      plantId: widget.selectedPlantId,
+                      nickname: widget.plantName,
                       wateringCycle: _convertScheduleToBackendFormat(
                           _selectedSchedule),
                       optimalTemperature: 25,
                       optimalHumidity: 43,
+                      tokenStorage: TokenStorage(),
                     ),
               ),
                   (route) => false,
@@ -280,18 +289,27 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
   }
 
   Future<http.Response> _sendPlantDataToBackend(
-      Map<String, dynamic> plantData) async {
-    // 실제 백엔드 API URL로 변경
+    Map<String, dynamic> plantData) async {
     const String apiUrl = 'http://10.0.2.2:8080/api/user-plants';
+    final jsonBody = jsonEncode(plantData);
+    print('SEND /api/user-plants body: $jsonBody');
 
-    final client = AuthClient();
-    final response = await client.post(
+    // 토큰 직접 가져와서 헤더에 붙임
+    final token = await TokenStorage.accessToken;
+    print('DEBUG token: $token');
+
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(plantData),
+      headers: headers,
+      body: jsonBody,
     );
+
+    print('DIRECT RESPONSE ${response.statusCode}: ${response.body}');
     return response;
   }
 }

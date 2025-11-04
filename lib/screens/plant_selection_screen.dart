@@ -1,8 +1,10 @@
+import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/plant_name_input_screen.dart';
 import 'package:flutter/material.dart';
 
 class PlantSelectionScreen extends StatefulWidget {
-  const PlantSelectionScreen({super.key});
+  final TokenStorage tokenStorage;
+  const PlantSelectionScreen({super.key, required this.tokenStorage});
 
   @override
   State<PlantSelectionScreen> createState() => _PlantSelectionScreenState();
@@ -139,13 +141,14 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
   }
 
   void _nextPage() {
-    if (_selectedPlant != null) {
+    if (_selectedPlantId != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) =>
               PlantNameInputScreen(
                 selectedPlantId: _selectedPlantId!,
+                tokenStorage: widget.tokenStorage,
               ),
         ),
       );

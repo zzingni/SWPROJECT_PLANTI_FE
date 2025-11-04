@@ -1,12 +1,15 @@
+import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/plant_watering_schedule_screen.dart';
 import 'package:flutter/material.dart';
 
 class PlantNameInputScreen extends StatefulWidget {
   final int selectedPlantId;
+  final TokenStorage tokenStorage;
 
   const PlantNameInputScreen({
     super.key,
     required this.selectedPlantId,
+    required this.tokenStorage,
   });
 
   @override
@@ -154,6 +157,7 @@ class _PlantNameInputScreenState extends State<PlantNameInputScreen> {
           builder: (context) => PlantWateringScheduleScreen(
             selectedPlantId: widget.selectedPlantId,
             plantName: plantName,
+            tokenStorage: widget.tokenStorage,
           ),
         ),
       );

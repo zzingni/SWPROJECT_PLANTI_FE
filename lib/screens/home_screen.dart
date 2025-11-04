@@ -1,20 +1,25 @@
+import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/plant_selection_screen.dart';
 import 'package:flutter/material.dart';
 
+
+
 class HomeScreen extends StatefulWidget {
-  final int? plantType;
-  final String? plantName;
+  final int? plantId;
+  final String? nickname;
   final String? wateringCycle;
   final int? optimalTemperature;
   final int? optimalHumidity;
+  final TokenStorage tokenStorage;
 
   const HomeScreen({
     super.key,
-    this.plantType,
-    this.plantName,
+    this.plantId,
+    this.nickname,
     this.wateringCycle,
     this.optimalTemperature,
     this.optimalHumidity,
+    required this.tokenStorage,
   });
 
   @override
@@ -25,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     // 반려식물이 등록된 경우와 아닌 경우를 구분
-    if (widget.plantType != null) {
+    if (widget.plantId != null) {
       return _buildPlantRegisteredView();
     } else {
       return _buildAddPlantView();
@@ -47,8 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             // 반려식물 메인 카드
             _PlantMainCard(
-              plantType: widget.plantType!,
-              plantName: widget.plantName!,
+              plantType: widget.plantId!,
+              plantName: widget.nickname!,
             ),
             const SizedBox(height: 20),
             // 환경 정보 카드들
@@ -73,8 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: const Center(
-        child: _AddPlantCard(),
+      body: Center(
+        child: _AddPlantCard(tokenStorage: widget.tokenStorage),
       ),
       bottomNavigationBar: const CustomBottomNavigationBar(),
     );
@@ -83,7 +88,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // 반려식물 추가 카드 (기존과 동일)
 class _AddPlantCard extends StatelessWidget {
-  const _AddPlantCard();
+
+  final TokenStorage tokenStorage;
+  const _AddPlantCard({required this.tokenStorage});
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +141,9 @@ class _AddPlantCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const PlantSelectionScreen(),
+                    builder: (context) => PlantSelectionScreen(
+                      tokenStorage: tokenStorage,
+                    ),
                   ),
                 );
               },
@@ -276,6 +285,7 @@ class _PlantMainCard extends StatelessWidget {
     );
   }
 }
+
 
 // 환경 정보 카드들
 class _EnvironmentCards extends StatelessWidget {
