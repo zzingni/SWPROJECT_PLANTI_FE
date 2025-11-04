@@ -10,26 +10,28 @@ class PlantSelectionScreen extends StatefulWidget {
 
 class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
   String? _selectedPlant;
+  int? _selectedPlantId;
 
-  final List<String> _plants = [
-    '선인장',
-    '다육이',
-    '난',
-    '산세베리아',
-    '고무나무',
-    '스파트필름',
-    '몬스테라',
-    '스투키',
-    '행운목',
-    '알로카시아',
-    '아이비',
-    '팔손이',
-    '이름을 모르겠어요',
-    '여기 없어요',
-  ];
+  final Map<String, int> plantMap = {
+    '선인장' : 1,
+    '다육이' : 2 ,
+    '난' : 3,
+    '산세베리아' : 4,
+    '고무나무' : 5,
+    '스파트필름' : 6,
+    '몬스테라' : 7,
+    '스투키' : 8,
+    '행운목' : 9,
+    '알로카시아' : 10,
+    '아이비' : 11,
+    '팔손이' : 12
+    // '이름을 모르겠어요' :,
+    // '여기 없어요',
+  };
 
   @override
   Widget build(BuildContext context) {
+    final plantEntries = plantMap.entries.toList();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -56,7 +58,6 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-
             // 식물 선택 그리드
             Expanded(
               child: GridView.builder(
@@ -66,17 +67,20 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
-                itemCount: _plants.length,
+                itemCount: plantEntries.length,
                 itemBuilder: (context, index) {
-                  final plant = _plants[index];
-                  final isSelected = _selectedPlant == plant;
+                  final plantEntry = plantEntries[index];
+                  final plantName = plantEntry.key;
+                  final plantId = plantEntry.value;
+                  final isSelected = _selectedPlantId == plantId;
 
                   return _PlantButton(
-                    plant: plant,
+                    plant: plantName,
                     isSelected: isSelected,
                     onTap: () {
                       setState(() {
-                        _selectedPlant = plant;
+                        _selectedPlantId = plantId;
+                        _selectedPlant = plantName;
                       });
                     },
                   );
