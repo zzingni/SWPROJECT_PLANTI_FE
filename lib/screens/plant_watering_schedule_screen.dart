@@ -46,7 +46,7 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
       case '가끔':
         return 'SOMETIMES';
       default:
-        return 'WEEK';
+        return 'DEFAULT';
     }
   }
 
@@ -195,29 +195,59 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
       final response = await _sendPlantDataToBackend(plantData);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // 성공
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('반려식물이 성공적으로 추가되었습니다!'),
-              backgroundColor: Color(0xFF4F7F43),
-            ),
-          );
+        // 성공 - 백엔드 응답 파싱
+        try {
+          final responseData = jsonDecode(response.body) as Map<String, dynamic>;
+          final plantNickName = responseData['plantNickName'] as String? ?? widget.plantName;
 
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) =>
-                  HomeScreen(
-                    plantType: widget.selectedPlant,
-                    plantName: widget.plantName,
-                    wateringCycle: _convertScheduleToBackendFormat(
-                        _selectedSchedule),
-                    optimalTemperature: 25,
-                    optimalHumidity: 43,
-                  ),
-            ),
-                (route) => false,
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('반려식물이 성공적으로 추가되었습니다!'),
+                backgroundColor: Color(0xFF4F7F43),
+              ),
+            );
+
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) =>
+                    HomeScreen(
+                      plantType: widget.selectedPlant,
+                      plantName: plantNickName,  // 백엔드에서 받은 plantNickName 사용
+                      wateringCycle: _convertScheduleToBackendFormat(
+                          _selectedSchedule),
+                      optimalTemperature: 25,
+                      optimalHumidity: 43,
+                    ),
+              ),
+                  (route) => false,
+            );
+          }
+        } catch (parseError) {
+          // JSON 파싱 실패 시 기존 plantName 사용
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('응답 파싱 오류: $parseError'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) =>
+                    HomeScreen(
+                      plantType: widget.selectedPlant,
+                      plantName: widget.plantName,
+                      wateringCycle: _convertScheduleToBackendFormat(
+                          _selectedSchedule),
+                      optimalTemperature: 25,
+                      optimalHumidity: 43,
+                    ),
+              ),
+                  (route) => false,
+            );
+          }
         }
       } else {
         // 실패
@@ -238,6 +268,12 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
             backgroundColor: Colors.red,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
