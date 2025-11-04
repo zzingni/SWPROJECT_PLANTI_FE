@@ -69,7 +69,11 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
             // 제목
             Text(
               '사용자가 직접 물 주기를\n정할 수 있어요!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF2D3748),
               ),
@@ -81,7 +85,11 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
             // 부제목
             Text(
               '선택하지 않으면 해당 식물의 기본 주기로 설정됩니다.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(
                 color: const Color(0xFF718096),
                 height: 1.4,
               ),
@@ -94,7 +102,8 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
             Expanded(
               child: ListView.separated(
                 itemCount: _schedules.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) =>
+                const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final schedule = _schedules[index];
                   final isSelected = _selectedSchedule == schedule;
@@ -117,7 +126,11 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
             // 페이지 인디케이터
             Text(
               '3/3',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: Theme
+                  .of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(
                 color: const Color(0xFF2D3748),
                 fontWeight: FontWeight.w500,
               ),
@@ -170,35 +183,54 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
       _isLoading = true;
     });
 
+    // 1. plantData 생성
+    final plantData = {
+      'plantType': widget.selectedPlant,
+      'plantName': widget.plantName,
+      'wateringCycle': _convertScheduleToBackendFormat(_selectedSchedule),
+      // 필요하면 온도, 습도 등 다른 데이터 추가
+    };
+
     try {
-      // 임시 로딩 시뮬레이션 (1초)
-      await Future.delayed(const Duration(seconds: 1));
+      final response = await _sendPlantDataToBackend(plantData);
 
-      // 성공 시 토스트 메시지
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('반려식물이 성공적으로 추가되었습니다!'),
-            backgroundColor: Color(0xFF4F7F43),
-          ),
-        );
-
-        // 홈화면으로 이동 (임시 데이터 사용)
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(
-              plantType: '다육이',
-              plantName: '다육이주인',
-              wateringCycle: 'week',
-              optimalTemperature: 25,
-              optimalHumidity: 43,
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // 성공
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('반려식물이 성공적으로 추가되었습니다!'),
+              backgroundColor: Color(0xFF4F7F43),
             ),
-          ),
-              (route) => false,
-        );
+          );
+
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) =>
+                  HomeScreen(
+                    plantType: widget.selectedPlant,
+                    plantName: widget.plantName,
+                    wateringCycle: _convertScheduleToBackendFormat(
+                        _selectedSchedule),
+                    optimalTemperature: 25,
+                    optimalHumidity: 43,
+                  ),
+            ),
+                (route) => false,
+          );
+        }
+      } else {
+        // 실패
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('등록 실패: ${response.statusCode}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
-      // 에러 처리
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -207,29 +239,23 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
           ),
         );
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
   }
 
-  Future<http.Response> _sendPlantDataToBackend(Map<String, dynamic> plantData) async {
-    // TODO: 실제 백엔드 API URL로 변경
+  Future<http.Response> _sendPlantDataToBackend(
+      Map<String, dynamic> plantData) async {
+    // 실제 백엔드 API URL로 변경
     const String apiUrl = 'https://your-api-url.com/api/plants';
 
     final response = await http.post(
       Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
-        // TODO: 인증 토큰이 필요하다면 추가
+        // 인증 토큰 필요 시 추가
         // 'Authorization': 'Bearer $token',
       },
       body: jsonEncode(plantData),
     );
-
     return response;
   }
 }
