@@ -36,17 +36,17 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
   String _convertScheduleToBackendFormat(String? schedule) {
     switch (schedule) {
       case '매일':
-        return 'day';
+        return 'DAY';
       case '한주에 1번':
-        return 'week';
+        return 'WEEK';
       case '한달에 1번':
-        return 'month';
+        return 'MONTH';
       case '수시로':
-        return 'often';
+        return 'OFTEN';
       case '가끔':
-        return 'sometimes';
+        return 'SOMETIMES';
       default:
-        return 'week'; // 기본값
+        return 'WEEK';
     }
   }
 
