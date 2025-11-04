@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fe/core/auth_client.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -7,12 +8,12 @@ import 'dart:convert';
 import 'home_screen.dart';
 
 class PlantWateringScheduleScreen extends StatefulWidget {
-  final String selectedPlant;
+  final int selectedPlantId;
   final String plantName;
 
   const PlantWateringScheduleScreen({
     super.key,
-    required this.selectedPlant,
+    required this.selectedPlantId,
     required this.plantName,
   });
 
@@ -185,7 +186,7 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
 
     // 1. plantData 생성
     final plantData = {
-      'plantType': widget.selectedPlant,
+      'plantType': widget.selectedPlantId,
       'plantName': widget.plantName,
       'wateringCycle': _convertScheduleToBackendFormat(_selectedSchedule),
       // 필요하면 온도, 습도 등 다른 데이터 추가
@@ -212,7 +213,7 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
               MaterialPageRoute(
                 builder: (context) =>
                     HomeScreen(
-                      plantType: widget.selectedPlant,
+                      plantType: widget.selectedPlantId!,
                       plantName: plantNickName,  // 백엔드에서 받은 plantNickName 사용
                       wateringCycle: _convertScheduleToBackendFormat(
                           _selectedSchedule),
@@ -237,7 +238,7 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
               MaterialPageRoute(
                 builder: (context) =>
                     HomeScreen(
-                      plantType: widget.selectedPlant,
+                      plantType: widget.selectedPlantId,
                       plantName: widget.plantName,
                       wateringCycle: _convertScheduleToBackendFormat(
                           _selectedSchedule),
@@ -281,14 +282,13 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
   Future<http.Response> _sendPlantDataToBackend(
       Map<String, dynamic> plantData) async {
     // 실제 백엔드 API URL로 변경
-    const String apiUrl = 'https://your-api-url.com/api/plants';
+    const String apiUrl = 'http://10.0.2.2:8080/api/user-plants';
 
-    final response = await http.post(
+    final client = AuthClient();
+    final response = await client.post(
       Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
-        // 인증 토큰 필요 시 추가
-        // 'Authorization': 'Bearer $token',
       },
       body: jsonEncode(plantData),
     );

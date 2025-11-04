@@ -2,7 +2,7 @@ import 'package:fe/screens/plant_selection_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String? plantType;
+  final int? plantType;
   final String? plantName;
   final String? wateringCycle;
   final int? optimalTemperature;
@@ -187,7 +187,7 @@ class _AddPlantCard extends StatelessWidget {
 
 // 반려식물 메인 카드 (캐릭터 포함)
 class _PlantMainCard extends StatelessWidget {
-  final String plantType;
+  final int plantType;
   final String plantName;
 
   const _PlantMainCard({

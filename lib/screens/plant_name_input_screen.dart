@@ -2,11 +2,11 @@ import 'package:fe/screens/plant_watering_schedule_screen.dart';
 import 'package:flutter/material.dart';
 
 class PlantNameInputScreen extends StatefulWidget {
-  final String selectedPlant;
+  final int selectedPlantId;
 
   const PlantNameInputScreen({
     super.key,
-    required this.selectedPlant,
+    required this.selectedPlantId,
   });
 
   @override
@@ -152,7 +152,7 @@ class _PlantNameInputScreenState extends State<PlantNameInputScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => PlantWateringScheduleScreen(
-            selectedPlant: widget.selectedPlant,
+            selectedPlantId: widget.selectedPlantId,
             plantName: plantName,
           ),
         ),

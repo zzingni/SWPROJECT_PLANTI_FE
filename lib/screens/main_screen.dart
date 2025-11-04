@@ -11,18 +11,7 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (debugSkipLogin) {
-      // 테스트용 진입 경로
-      return const HomeScreen(
-        plantType: '다육이',
-        plantName: '다육이주인',
-        wateringCycle: 'week',
-        optimalTemperature: 25,
-        optimalHumidity: 43,
-      );
-    }
-    // 기본은 스플래시 → 인증 화면 플로우
-    return const SplashOneScreen();
+      return const SplashOneScreen();
   }
 }
 

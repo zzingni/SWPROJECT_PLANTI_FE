@@ -145,7 +145,7 @@ class _PlantSelectionScreenState extends State<PlantSelectionScreen> {
         MaterialPageRoute(
           builder: (context) =>
               PlantNameInputScreen(
-                selectedPlant: _selectedPlant!,
+                selectedPlantId: _selectedPlantId!,
               ),
         ),
       );
