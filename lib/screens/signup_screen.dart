@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -55,13 +56,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    final url = Uri.parse('http://10.0.2.2:8080/api/auth/signup'); // 백엔드 주소
+    // FCM 토큰 가져오기
+    String? fcmToken = await FirebaseMessaging.instance.getToken();
+
+    final url = Uri.parse('http://10.0.2.2:8080/api/auth/signup');
     final body = jsonEncode({
       "loginId": _idController.text.trim(),
       "password": _pwController.text.trim(),
       "nickname": _nickController.text.trim(),
       "gender": _gender,
       "age": int.parse(_ageController.text.trim()),
+      "fcmToken": fcmToken, // 추가
     });
 
     try {

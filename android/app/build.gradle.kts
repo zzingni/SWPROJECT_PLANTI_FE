@@ -1,12 +1,12 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id("dev.flutter.flutter-gradle-plugin")
+    id("dev.flutter.flutter-gradle-plugin") // Flutter 플러그인
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.example.fe"
+    namespace = "com.planti.fe" // 실제 앱 패키지로 변경
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,14 +16,11 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "11" // JavaVersion.VERSION_11.toString() 대신 문자열로 명시
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.fe"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.planti.fe"// 실제 앱 패키지
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -32,9 +29,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("debug") // 디버그용 서명
         }
     }
 }
@@ -43,4 +38,34 @@ flutter {
     source = "../.."
 }
 
-apply plugin: 'com.google.gms.google-services'
+dependencies {
+    // Firebase BOM으로 버전 관리
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+    // 개별 SDK 추가
+    implementation("com.google.firebase:firebase-analytics")
+}
+
+// apply 방식으로 FCM 플러그인 적용
+apply(plugin = "com.google.gms.google-services")
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+val newBuildDir: Directory =
+    rootProject.layout.buildDirectory
+        .dir("../../build")
+        .get()
+rootProject.layout.buildDirectory.value(newBuildDir)
+
+subprojects {
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(newSubprojectBuildDir)
+}
+
+subprojects {
+    project.evaluationDependsOn(":app")
+}

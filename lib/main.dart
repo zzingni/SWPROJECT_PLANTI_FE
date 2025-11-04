@@ -15,9 +15,10 @@ void main() async {
   await Firebase.initializeApp();
 
   // 앱 시작 시 FCM 토큰 가져오기
-  String? fcmToken = await FirebaseMessaging.instance.getToken();
-  if (fcmToken != null) {
-    print('FCM 토큰: $fcmToken');
+  try {
+    String? token = await FirebaseMessaging.instance.getToken();
+  } catch (e) {
+    print('FCM token error: $e');
   }
 
   runApp(const MyApp());
