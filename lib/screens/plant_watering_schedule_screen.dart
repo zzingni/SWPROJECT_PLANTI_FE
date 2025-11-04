@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:fe/core/auth_client.dart';
 import 'package:fe/core/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -10,13 +9,13 @@ import 'home_screen.dart';
 
 class PlantWateringScheduleScreen extends StatefulWidget {
   final int selectedPlantId;
-  final String plantName;
+  final String nickname;
   final TokenStorage tokenStorage;
 
   const PlantWateringScheduleScreen({
     super.key,
     required this.selectedPlantId,
-    required this.plantName,
+    required this.nickname,
     required this.tokenStorage,
   });
 
@@ -190,7 +189,7 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
     // 1. plantData 생성
     final plantData = {
       'plantId': widget.selectedPlantId,
-      'plantName': widget.plantName,
+      'nickname': widget.nickname,
       if (_selectedSchedule !=
           null) 'wateringCycle': _convertScheduleToBackendFormat(
           _selectedSchedule),
@@ -204,8 +203,8 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
         try {
           final responseData = jsonDecode(response.body) as Map<String,
               dynamic>;
-          final plantNickName = responseData['plantNickName'] as String? ??
-              widget.plantName;
+          final nickname = responseData['nickname'] as String? ??
+              widget.nickname;
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -220,20 +219,18 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
                 builder: (context) =>
                     HomeScreen(
                       plantId: widget.selectedPlantId,
-                      nickname: plantNickName,
-                      // 백엔드에서 받은 plantNickName 사용
-                      wateringCycle: _convertScheduleToBackendFormat(
-                          _selectedSchedule),
+                      nickname: widget.nickname, // 그대로
+                      wateringCycle: _convertScheduleToBackendFormat(_selectedSchedule ?? ''),
                       optimalTemperature: 25,
                       optimalHumidity: 43,
-                      tokenStorage: widget.tokenStorage,
+                      tokenStorage: widget.tokenStorage, // 기존 tokenStorage 사용
                     ),
               ),
                   (route) => false,
             );
           }
         } catch (parseError) {
-          // JSON 파싱 실패 시 기존 plantName 사용
+          // JSON 파싱 실패 시 기존 nickname 사용
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -247,7 +244,7 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
                 builder: (context) =>
                     HomeScreen(
                       plantId: widget.selectedPlantId,
-                      nickname: widget.plantName,
+                      nickname: widget.nickname,
                       wateringCycle: _convertScheduleToBackendFormat(
                           _selectedSchedule),
                       optimalTemperature: 25,

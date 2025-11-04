@@ -149,14 +149,14 @@ class _PlantNameInputScreenState extends State<PlantNameInputScreen> {
   }
 
   void _nextPage() {
-    final plantName = _nameController.text.trim();
-    if (plantName.isNotEmpty) {
+    final nickname = _nameController.text.trim();
+    if (nickname.isNotEmpty) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => PlantWateringScheduleScreen(
             selectedPlantId: widget.selectedPlantId,
-            plantName: plantName,
+            nickname: nickname,
             tokenStorage: widget.tokenStorage,
           ),
         ),

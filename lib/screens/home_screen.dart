@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/plant_selection_screen.dart';
 import 'package:flutter/material.dart';
@@ -27,10 +29,65 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String? nickname;
+  int? optimalTemperature;
+  int? optimalHumidity;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPlantInfo();
+  }
+
+  Future<void> _fetchPlantInfo() async {
+    try {
+      // 토큰 가져오기
+      final token = await TokenStorage.accessToken;
+      if (token == null) {
+        print('토큰 없음');
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      // API 호출
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/api/user/plant'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          nickname = data['nickname']; // 백엔드 구조에 맞게
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        print('반려식물 정보 조회 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print('반려식물 정보 조회 중 에러: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 반려식물이 등록된 경우와 아닌 경우를 구분
-    if (widget.plantId != null) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (nickname != null) {
       return _buildPlantRegisteredView();
     } else {
       return _buildAddPlantView();
@@ -52,8 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             // 반려식물 메인 카드
             _PlantMainCard(
-              plantType: widget.plantId!,
-              plantName: widget.nickname!,
+              nickname: nickname!,
             ),
             const SizedBox(height: 20),
             // 환경 정보 카드들
@@ -196,12 +252,10 @@ class _AddPlantCard extends StatelessWidget {
 
 // 반려식물 메인 카드 (캐릭터 포함)
 class _PlantMainCard extends StatelessWidget {
-  final int plantType;
-  final String plantName;
+  final String nickname;
 
   const _PlantMainCard({
-    required this.plantType,
-    required this.plantName,
+    required this.nickname,
   });
 
   @override
@@ -230,7 +284,7 @@ class _PlantMainCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              plantName,
+              nickname,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF2D3748),

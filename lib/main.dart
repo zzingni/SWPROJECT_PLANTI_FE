@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:fe/screens/home_screen.dart';
 import 'package:fe/screens/login_screen.dart';
-import 'package:fe/screens/main_screen.dart';
-import 'package:fe/screens/signup_screen.dart';
+import 'package:fe/screens/plant_name_input_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'widgets/auth_button.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'core/token_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,79 +20,93 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: _SplashGate(),
+      home: SplashGate(),
     );
   }
 }
 
-/// 앱 실행 시 자동 로그인 여부를 판별하는 스플래시 게이트
-class _SplashGate extends StatefulWidget {
-  const _SplashGate({super.key});
+/// 앱 실행 시 자동 로그인 여부 + 사용자 반려식물 여부 판별
+class SplashGate extends StatefulWidget {
+  const SplashGate({super.key});
 
   @override
-  State<_SplashGate> createState() => _SplashGateState();
+  State<SplashGate> createState() => _SplashGateState();
 }
 
-class _SplashGateState extends State<_SplashGate> {
+class _SplashGateState extends State<SplashGate> {
   final _storage = const FlutterSecureStorage();
-  Future<bool>? _hasToken;
+  late final TokenStorage _tokenStorage;
+  late Future<Widget> _startScreen;
 
   @override
   void initState() {
     super.initState();
-    _hasToken = _checkToken();
+    _tokenStorage = TokenStorage();
+    _startScreen = _determineStartScreen();
   }
 
-  // 저장된 토큰 유무 확인
-  Future<bool> _checkToken() async {
-    // 실제 자동 로그인 확인용
+  Future<Widget> _determineStartScreen() async {
     final access = await _storage.read(key: 'accessToken');
-    return access != null && access.isNotEmpty;
+    if (access == null || access.isEmpty) {
+      // 토큰 없으면 로그인 화면
+      return LoginScreen(tokenStorage: _tokenStorage);
+    }
+
+    // 토큰 있으면 저장
+    await TokenStorage.saveTokens(accessToken: access);
+
+    try {
+      // 백엔드 호출해서 사용자 반려식물 존재 여부 확인
+      const apiUrl = 'http://10.0.2.2:8080/api/user-plants/me'; // 예시 엔드포인트
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $access',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List<dynamic>;
+        if (data.isNotEmpty) {
+          // 반려식물 존재 → HomeScreen
+          final plant = data.first;
+          return HomeScreen(
+            tokenStorage: _tokenStorage,
+            nickname: plant['plantNickName'],
+          );
+        } else {
+          // 반려식물 없음 → 이름 입력 화면
+          return PlantNameInputScreen(
+            selectedPlantId: 0, // 기본값, 사용자가 선택 후 바뀜
+            tokenStorage: _tokenStorage,
+          );
+        }
+      } else {
+        // API 호출 실패 → 로그인 화면
+        return LoginScreen(tokenStorage: _tokenStorage);
+      }
+    } catch (e) {
+      // 오류 발생 시 로그인 화면
+      return LoginScreen(tokenStorage: _tokenStorage);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: _hasToken,
-      builder: (context, snap) {
-        if (!snap.hasData) {
+    return FutureBuilder<Widget>(
+      future: _startScreen,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
-        final loggedIn = snap.data!;
-
-        // 테스트용 코드: 로그인 없이 바로 HomeScreen 진입
-        // 실제 배포 시엔 아래 주석 해제
-        // return loggedIn ? const HomeScreen() : const LoginScreen();
-
-        // return const HomeScreen(
-        //   plantType: '다육이',
-        //   plantName: '초록다육이주인',
-        //   wateringCycle: 'week',
-        //   optimalTemperature: 25,
-        //   optimalHumidity: 43,
-        // );
-        return const MainScreen();
+        return snapshot.data!;
       },
     );
   }
 }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       title: 'Planti',
-//       theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6AA84F)),
-//         useMaterial3: true,
-//       ),
-//       home: const SplashOneScreen(),
-//     );
-//   }
-// }
 
 /// 공통 페이드 전환
 Future<void> navigateWithFadeReplacement(BuildContext context, Widget page,
