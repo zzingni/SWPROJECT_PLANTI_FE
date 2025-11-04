@@ -3,6 +3,7 @@ import 'package:fe/screens/home_screen.dart';
 import 'package:fe/screens/login_screen.dart';
 import 'package:fe/screens/plant_name_input_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'core/token_storage.dart';
@@ -12,6 +13,13 @@ import 'dart:convert';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // 앱 시작 시 FCM 토큰 가져오기
+  String? fcmToken = await FirebaseMessaging.instance.getToken();
+  if (fcmToken != null) {
+    print('FCM 토큰: $fcmToken');
+  }
+
   runApp(const MyApp());
 }
 
