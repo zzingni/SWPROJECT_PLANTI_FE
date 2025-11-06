@@ -8,20 +8,19 @@ class AuthService {
   static const _secure = FlutterSecureStorage();
 
   /// 로그인 API 호출 + 토큰 저장 + FCM 토큰 등록
-  static Future<void> handleLogin(String email, String password) async {
+  static Future<void> handleLogin(String id, String password) async {
     final response = await http.post(
       Uri.parse('http://10.0.2.2:8080/api/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'loginId': email, 'password': password}),
+      body: jsonEncode({'loginId': id, 'password': password}),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
 
       // 1. 토큰 저장
-      await TokenStorage.saveTokens(
-        accessToken: data['accessToken'],
-        refreshToken: data['refreshToken'],
+      await TokenStorage.saveAccessToken(
+        accessToken: data['token']
       );
 
       // 2. userId 저장

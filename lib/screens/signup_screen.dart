@@ -57,7 +57,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     // FCM 토큰 가져오기
-    String? fcmToken = await FirebaseMessaging.instance.getToken();
+    String? fcmToken;
+    try {
+      // fcm 토큰을 안전하게 가져오기 시도
+      fcmToken = await FirebaseMessaging.instance.getToken();
+      print("FCM Token: $fcmToken");
+    } catch (e) {
+      // 토큰 가져오기 실패 시 오류를 출력하지만 앱의 흐름은 막지 않음
+      print("FCM 토큰을 가져오는 데 실패했습니다: $e");
+      // fcmToken은 null 상태로 다음 로직을 진행합니다.
+    }
 
     final url = Uri.parse('http://10.0.2.2:8080/api/auth/signup');
     final body = jsonEncode({

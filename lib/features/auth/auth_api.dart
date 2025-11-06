@@ -22,17 +22,25 @@ class AuthApi {
     );
 
     if (res.statusCode == 200) {
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-      final access = data['accessToken'] as String?;
-      final refresh = data['refreshToken'] as String?;
-      if (access == null) {
-        throw Exception('accessToken 누락');
+      final Map<String, dynamic> data = jsonDecode(res.body);
+
+      // Access Token 추출 및 널 체크
+      final String? accessToken = data['token'] as String?;
+      // Access Token이 필수로 누락되었는지 확인 (401 오류가 아닌데도 토큰이 없는 경우)
+      if (accessToken == null || accessToken.isEmpty) {
+        // 토큰이 누락된 경우
+        throw Exception('로그인 성공 응답에서 Access Token(token)이 누락되었습니다.');
       }
-      await TokenStorage.saveTokens(accessToken: access, refreshToken: refresh);
+
+      // 토큰 저장 (추출한 변수 이름 사용)
+      await TokenStorage.saveAccessToken(
+        accessToken: accessToken
+      );
+
       return;
     }
     throw Exception('로그인 실패 (${res.statusCode}): ${res.body}');
-  }
+    }
 
   /// 인증 필요한 API 호출
   static Future<String> fetchMe() async {

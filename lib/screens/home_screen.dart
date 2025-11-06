@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/plant_selection_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:fe/screens/community_screen.dart';
 
 
 
@@ -79,6 +80,31 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _handleTabTap(int index) {
+    if (!mounted) return;
+
+    switch (index) {
+      case 0:
+      // 홈 - 이미 현재 화면
+        break;
+      case 1:
+      // 커뮤니티 화면으로 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CommunityScreen(),
+          ),
+        );
+        break;
+      case 2:
+      // 검색 화면으로 이동
+        break;
+      case 3:
+      // 마이페이지 화면으로 이동
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -121,7 +147,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavigationBar(),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: 0,
+        onTabTap: _handleTabTap,
+      ),
     );
   }
 
@@ -137,7 +166,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Center(
         child: _AddPlantCard(tokenStorage: widget.tokenStorage),
       ),
-      bottomNavigationBar: const CustomBottomNavigationBar(),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: 0,
+        onTabTap: _handleTabTap,
+      ),
     );
   }
 }
@@ -428,37 +460,34 @@ class _EnvironmentCard extends StatelessWidget {
   }
 }
 
-// 하단 네비게이션바 (기존과 동일)
-class CustomBottomNavigationBar extends StatefulWidget {
-  const CustomBottomNavigationBar({super.key});
+// 하단 네비게이션바
+class CustomBottomNavigationBar extends StatelessWidget {
+  final int currentIndex;
+  final Function(int) onTabTap;
 
-  @override
-  State<CustomBottomNavigationBar> createState() => _CustomBottomNavigationBarState();
-}
+  const CustomBottomNavigationBar({
+    super.key,
+    required this.currentIndex,
+    required this.onTabTap,
+  });
 
-class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
-  int _currentIndex = 0;
-
-  final List<BottomNavItem> _navItems = [
+  // _navItems를 클래스 내부에 정의
+  static const List<BottomNavItem> _navItems = [
     BottomNavItem(
       icon: Icons.home_rounded,
       label: '홈',
-      isActive: true,
     ),
     BottomNavItem(
       icon: Icons.people_rounded,
       label: '커뮤니티',
-      isActive: false,
     ),
     BottomNavItem(
       icon: Icons.search_rounded,
       label: '검색',
-      isActive: false,
     ),
     BottomNavItem(
       icon: Icons.person_rounded,
       label: '마이페이지',
-      isActive: false,
     ),
   ];
 
@@ -482,16 +511,11 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
             children: _navItems.asMap().entries.map((entry) {
               final index = entry.key;
               final item = entry.value;
-              final isSelected = _currentIndex == index;
+              final isSelected = currentIndex == index;
 
               return Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _currentIndex = index;
-                    });
-                    _handleTabTap(index);
-                  },
+                  onTap: () => onTabTap(index),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Column(
@@ -526,33 +550,14 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
       ),
     );
   }
-
-  void _handleTabTap(int index) {
-    switch (index) {
-      case 0:
-      // 홈 - 이미 현재 화면
-        break;
-      case 1:
-      // 커뮤니티 화면으로 이동
-        break;
-      case 2:
-      // 검색 화면으로 이동
-        break;
-      case 3:
-      // 마이페이지 화면으로 이동
-        break;
-    }
-  }
 }
 
 class BottomNavItem {
   final IconData icon;
   final String label;
-  final bool isActive;
 
-  BottomNavItem({
+  const BottomNavItem({
     required this.icon,
     required this.label,
-    required this.isActive,
   });
 }

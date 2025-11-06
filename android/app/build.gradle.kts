@@ -39,14 +39,13 @@ flutter {
 }
 
 dependencies {
+    implementation(kotlin("stdlib"))
     // Firebase BOM으로 버전 관리
     implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
     // 개별 SDK 추가
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging")
 }
-
-// apply 방식으로 FCM 플러그인 적용
-apply(plugin = "com.google.gms.google-services")
 
 allprojects {
     repositories {

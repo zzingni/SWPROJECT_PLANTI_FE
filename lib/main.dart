@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:fe/screens/home_screen.dart';
 import 'package:fe/screens/login_screen.dart';
+import 'package:fe/screens/main_screen.dart';
 import 'package:fe/screens/plant_name_input_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -15,7 +16,7 @@ void main() async {
   await Firebase.initializeApp();
 
   final storage = FlutterSecureStorage();
-  await storage.deleteAll();
+  // await storage.deleteAll();
 
   // 앱 시작 시 FCM 토큰 가져오기
   try {
@@ -34,7 +35,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashGate(),
+      home: MainScreen(),
     );
   }
 }
@@ -67,7 +68,7 @@ class _SplashGateState extends State<SplashGate> {
     }
 
     // 토큰 있으면 저장
-    await TokenStorage.saveTokens(accessToken: access);
+    await TokenStorage.saveAccessToken(accessToken: access);
 
     try {
       // 백엔드 호출해서 사용자 반려식물 존재 여부 확인

@@ -1,12 +1,6 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:8.1.1")
-        classpath("com.google.gms:google-services:4.3.15")
-    }
+plugins {
+    // Google Services 플러그인 정의
+    id("com.google.gms.google-services") version "4.4.4" apply false
 }
 
 allprojects {
