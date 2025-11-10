@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fe/notification/push_notification_service.dart';
 import 'package:fe/screens/home_screen.dart';
 import 'package:fe/screens/login_screen.dart';
 import 'package:fe/screens/main_screen.dart';
@@ -11,21 +12,45 @@ import 'core/token_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('백그라운드 메시지 수신: ${message.messageId}');
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  final storage = FlutterSecureStorage();
-  // await storage.deleteAll();
+  // 백그라운드 메시지 핸들러 등록
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // 앱 시작 시 FCM 토큰 가져오기
+  // FCM 토큰 가져오기
+  await _initFCM();
+
+  runApp(const MyApp());
+}
+
+// FCM 초기화 + 토큰 가져오기
+Future<void> _initFCM() async {
   try {
     String? token = await FirebaseMessaging.instance.getToken();
+    print('FCM token: $token');
+
+    // 필요하면 서버에 토큰 전송
+    // await sendTokenToServer(token);
+
   } catch (e) {
     print('FCM token error: $e');
   }
 
-  runApp(const MyApp());
+  // 포그라운드 메시지 수신 콜백
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print('Foreground message received: ${message.notification?.title}');
+  });
+
+  // 메시지 클릭 시 앱 열기
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print('Message clicked: ${message.data}');
+  });
 }
 
 class MyApp extends StatelessWidget {
