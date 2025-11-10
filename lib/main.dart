@@ -9,8 +9,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'core/token_storage.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('백그라운드 메시지 수신: ${message.messageId}');
@@ -20,13 +23,26 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
+  // intl 지역 데이터 초기화
+  await initializeDateFormatting('ko_KR', null);
+
   // 백그라운드 메시지 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // FCM 토큰 가져오기
   await _initFCM();
 
-  runApp(const MyApp());
+  runApp(
+    MaterialApp(
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
+      home: MainScreen(),
+    ),
+  );
+
+  print('>>> main: calling PushNotificationService.init');
+  await PushNotificationService.instance.init(navigatorKey);
+  print('>>> main: PushNotificationService.init done');
 }
 
 // FCM 초기화 + 토큰 가져오기
@@ -41,16 +57,6 @@ Future<void> _initFCM() async {
   } catch (e) {
     print('FCM token error: $e');
   }
-
-  // 포그라운드 메시지 수신 콜백
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print('Foreground message received: ${message.notification?.title}');
-  });
-
-  // 메시지 클릭 시 앱 열기
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('Message clicked: ${message.data}');
-  });
 }
 
 class MyApp extends StatelessWidget {

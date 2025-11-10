@@ -13,6 +13,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -45,6 +46,7 @@ dependencies {
     // 개별 SDK 추가
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging")
+    add("coreLibraryDesugaring", "com.android.tools:desugar_jdk_libs:2.0.3")
 }
 
 allprojects {
@@ -67,4 +69,8 @@ subprojects {
 
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.addAll(listOf("-Xlint:-options", "-Xlint:unchecked", "-Xlint:deprecation"))
 }

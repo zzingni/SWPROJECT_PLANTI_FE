@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-
-import 'package:fe/notification/palnt_notifiaction_banner.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'palnt_notifiaction_banner.dart'; // 기존 배너 위젯
 
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse response) {
+  // 백그라운드에서 알림을 탭했을 때 호출됨 (Android)
+  debugPrint('Background notification tapped (bg isolate): ${response.payload}');
+}
 
 const AndroidNotificationChannel _plantNotificationChannel = AndroidNotificationChannel(
   'plant_watering_channel',
@@ -17,7 +21,8 @@ const AndroidNotificationChannel _plantNotificationChannel = AndroidNotification
   importance: Importance.max,
 );
 
-final FlutterLocalNotificationsPlugin _localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -27,7 +32,6 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class PushNotificationService {
   PushNotificationService._();
-
   static final PushNotificationService instance = PushNotificationService._();
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -36,49 +40,64 @@ class PushNotificationService {
   Timer? _dismissTimer;
 
   Future<void> init(GlobalKey<NavigatorState> navigatorKey) async {
+    print('>>> PushNotificationService.init start');
     _navigatorKey = navigatorKey;
+
     await _ensureFirebaseInitialized();
+    print('>>> Firebase ensured');
 
-    await _messaging.setAutoInitEnabled(true);
     await _requestPermission();
-    await _configureLocalNotifications();
+    print('>>> Notification permission requested');
 
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+    await _configureLocalNotifications();
+    print('>>> Local notifications configured');
+
+    // Foreground 메시지는 service 내부의 handleForegroundMessage로 위임
+    FirebaseMessaging.onMessage.listen((message) {
+      print('>>> PushNotificationService.onMessage received: ${message.notification?.title} / ${message.data}');
+      try {
+        handleForegroundMessage(message);
+      } catch (e, st) {
+        print('>>> Error in handleForegroundMessage: $e');
+        print(st);
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      print('>>> PushNotificationService.onMessageOpenedApp: ${message.data}');
+      try {
+        _handleMessageOpenedApp(message);
+      } catch (e, st) {
+        print('>>> Error in onMessageOpenedApp handler: $e');
+        print(st);
+      }
+    });
+
+    print('>>> PushNotificationService.init finished, listeners registered');
 
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
+      print('>>> PushNotificationService: initialMessage present: ${initialMessage.data}');
       await _showSystemNotification(initialMessage);
       _navigateByMessage(initialMessage);
     }
   }
 
+  // 공개된 핸들러: 외부에서 메시지를 위임할 때도 사용하도록 함
+  void handleForegroundMessage(RemoteMessage message) {
+    print('>>> handleForegroundMessage called');
+    _showSystemNotification(message);
+    _showBanner(message);
+  }
+
   Future<void> _ensureFirebaseInitialized() async {
-    try {
-      if (Firebase.apps.isEmpty) {
-        await Firebase.initializeApp();
-      }
-    } catch (error, stackTrace) {
-      debugPrint('Firebase 초기화 실패: $error');
-      debugPrintStack(stackTrace: stackTrace);
-    }
+    if (Firebase.apps.isEmpty) await Firebase.initializeApp();
   }
 
   Future<void> _requestPermission() async {
-    try {
-      final settings = await _messaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-      debugPrint('FCM 권한 상태: ${settings.authorizationStatus}');
-    } catch (error) {
-      debugPrint('알림 권한 요청 실패: $error');
-    }
+    await _messaging.requestPermission(
+      alert: true, badge: true, sound: true, provisional: false,
+    );
   }
 
   Future<void> _configureLocalNotifications() async {
@@ -86,28 +105,20 @@ class PushNotificationService {
     const iosInit = DarwinInitializationSettings();
     const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
 
+    // onDidReceiveNotificationResponse: 포그라운드/사용자 탭 처리
+    // onDidReceiveBackgroundNotificationResponse: 반드시 top-level 함수 사용
     await _localNotificationsPlugin.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
+      onDidReceiveNotificationResponse: (response) {
+        // 앱이 포그라운드이거나 사용자가 알림 탭으로 앱을 연 경우 처리
         _handleNotificationTap(response.payload);
       },
-      onDidReceiveBackgroundNotificationResponse: (NotificationResponse response) {
-        _handleNotificationTap(response.payload);
-      },
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
-    final androidPlugin =
-    _localNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _localNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_plantNotificationChannel);
-  }
-
-  void _handleForegroundMessage(RemoteMessage message) {
-    _showSystemNotification(message);
-    _showBanner(message);
-  }
-
-  void _handleMessageOpenedApp(RemoteMessage message) {
-    _navigateByMessage(message);
   }
 
   Future<void> _showSystemNotification(RemoteMessage message) async {
@@ -115,6 +126,7 @@ class PushNotificationService {
     final title = notification?.title ?? message.data['title'] ?? '반려식물 알림';
     final body = notification?.body ?? message.data['body'] ?? '반려식물에게 물을 주세요!';
     final payload = message.data.isEmpty ? null : jsonEncode(message.data);
+    print('알림 호출!');
 
     final androidDetails = AndroidNotificationDetails(
       _plantNotificationChannel.id,
@@ -143,7 +155,10 @@ class PushNotificationService {
 
   void _showBanner(RemoteMessage message) {
     final overlayState = _navigatorKey?.currentState?.overlay;
+    print('overlayState: $overlayState, navigatorKey: ${_navigatorKey}');
     if (overlayState == null) return;
+    print('배너 호출! overlayState: $overlayState');
+    print('배너 호출!');
 
     _dismissBanner();
 
@@ -182,6 +197,10 @@ class PushNotificationService {
     }
   }
 
+  void _handleMessageOpenedApp(RemoteMessage message) {
+    _navigateByMessage(message);
+  }
+
   void _navigateByMessage(RemoteMessage message) {
     if (message.data.isEmpty) return;
     _navigateByData(message.data);
@@ -197,4 +216,3 @@ class PushNotificationService {
     navigator.pushNamed(target, arguments: data);
   }
 }
-
