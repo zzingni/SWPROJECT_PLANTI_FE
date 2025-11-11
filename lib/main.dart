@@ -15,7 +15,9 @@ import 'dart:convert';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+@pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // 백그라운드에서 수신한 메시지 처리
   print('백그라운드 메시지 수신: ${message.messageId}');
 }
 
