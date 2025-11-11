@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fe/core/token_storage.dart';
+import '../models/post.dart';
+import '../services/post_service.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -140,246 +145,374 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 }
 
+// 게시판 ID 상수
+class BoardIds {
+  static const int showOff = 1; // 자랑게시판
+  static const int question = 2; // 궁금해요
+  static const int information = 3; // 정보게시판
+}
+
+// 공통 게시글 목록 탭 (자랑게시판, 궁금해요 공통 사용)
+class PostListTab extends StatefulWidget {
+  final int boardId;
+  final String boardName;
+
+  const PostListTab({
+    super.key,
+    required this.boardId,
+    required this.boardName,
+  });
+
+  @override
+  State<PostListTab> createState() => _PostListTabState();
+}
+
+class _PostListTabState extends State<PostListTab> {
+  late PostService _postService;
+  List<Post> _posts = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  int _currentPage = 0;
+  bool _hasMore = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // baseUrl 설정 - 안드로이드 에뮬레이터의 경우 10.0.2.2 사용
+    // 실제 디바이스나 iOS 시뮬레이터의 경우 localhost 사용
+    // 실제 서버 배포 시 서버 주소로 변경
+    const String baseUrl = 'http://10.0.2.2:8080'; // 안드로이드 에뮬레이터용
+    // const String baseUrl = 'http://localhost:8080'; // iOS 시뮬레이터 또는 실제 디바이스용
+    // const String baseUrl = 'http://43.202.149.234:8080'; // 실제 서버용
+    _postService = PostService(http.Client(), baseUrl: baseUrl);
+    _loadPosts();
+  }
+
+  @override
+  void dispose() {
+    _postService.close();
+    super.dispose();
+  }
+
+  Future<void> _loadPosts({bool loadMore = false}) async {
+    if (!loadMore) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+        _currentPage = 0;
+      });
+    } else {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    try {
+      // 토큰 가져오기
+      final token = await TokenStorage.accessToken;
+      if (token == null) {
+        if (!mounted) return;
+        setState(() {
+          _errorMessage = '로그인이 필요합니다.\n로그인 후 다시 시도해주세요.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final pageToLoad = loadMore ? _currentPage + 1 : 0;
+      final response = await _postService.fetchPosts(
+        boardId: widget.boardId,
+        page: pageToLoad,
+        size: 20,
+        sortBy: 'createdAt',
+        direction: 'DESC',
+        accessToken: token,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        if (loadMore) {
+          _posts.addAll(response.content);
+        } else {
+          _posts = response.content;
+        }
+        _currentPage = response.page;
+        _hasMore = !response.last;
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } catch (e, stackTrace) {
+      if (!mounted) return;
+      // 에러 로깅
+      print('게시글 로드 에러: $e');
+      print('스택 트레이스: $stackTrace');
+
+      String errorMsg = '게시글을 불러오는데 실패했습니다.';
+      if (e.toString().contains('Failed host lookup') ||
+          e.toString().contains('SocketException') ||
+          e.toString().contains('Network is unreachable')) {
+        errorMsg = '네트워크 연결을 확인해주세요.\n서버에 연결할 수 없습니다.';
+      } else if (e.toString().contains('404')) {
+        errorMsg = '게시판을 찾을 수 없습니다.';
+      } else if (e.toString().contains('401') || e.toString().contains('403')) {
+        errorMsg = '인증이 필요합니다.\n로그인 후 다시 시도해주세요.';
+      } else if (e.toString().contains('500')) {
+        errorMsg = '서버 오류가 발생했습니다.';
+      } else {
+        errorMsg = '게시글을 불러오는데 실패했습니다.\n${e.toString()}';
+      }
+
+      setState(() {
+        _errorMessage = errorMsg;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _refresh() async {
+    await _loadPosts(loadMore: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading && _posts.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_errorMessage != null && _posts.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _refresh,
+                icon: const Icon(Icons.refresh),
+                label: const Text('다시 시도'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '서버가 실행 중인지 확인해주세요.\n안드로이드 에뮬레이터: http://10.0.2.2:8080',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_posts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.article_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '${widget.boardName}에 게시글이 없습니다.',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _posts.length + (_hasMore ? 1 : 0),
+        separatorBuilder: (context, index) {
+          if (index < _posts.length - 1) {
+            return const Divider(
+              height: 1,
+              thickness: 1,
+              color: Color(0xFFE0E0E0),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+        itemBuilder: (context, index) {
+          if (index == _posts.length) {
+            // 더 불러오기 버튼
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Center(
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : TextButton(
+                  onPressed: _hasMore
+                      ? () {
+                    _loadPosts(loadMore: true);
+                  }
+                      : null,
+                  child: Text(_hasMore ? '더 보기' : '마지막 페이지'),
+                ),
+              ),
+            );
+          }
+
+          final post = _posts[index];
+          return _buildPostItem(post);
+        },
+      ),
+    );
+  }
+
+  Widget _buildPostItem(Post post) {
+    final dateFormat = DateFormat('M/d', 'ko_KR');
+    final hasImage = post.imageUrl != null && post.imageUrl!.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasImage) ...[
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  _getImageUrl(post.imageUrl!),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image, color: Colors.grey),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  post.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  post.content,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      post.nickname,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      dateFormat.format(post.createdAt),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getImageUrl(String imagePath) {
+    // 이미지 URL이 상대 경로인 경우 baseUrl과 결합
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    const String baseUrl = 'http://10.0.2.2:8080'; // 안드로이드 에뮬레이터용
+    // const String baseUrl = 'http://localhost:8080'; // iOS 시뮬레이터 또는 실제 디바이스용
+    return '$baseUrl$imagePath';
+  }
+}
+
 // 자랑게시판 탭
 class ShowOffBoardTab extends StatelessWidget {
   const ShowOffBoardTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 샘플 데이터
-    final posts = [
-      {
-        'title': '다육이 짱 많이 큼',
-        'content': '작년부터 키웠는데 벌써 이만큼 컸음 ㅜㅜ',
-        'author': '다육다육',
-        'date': '9/14',
-        'hasImage': false,
-      },
-      {
-        'title': '이렇게 예쁜 나팔꽃 본 적 있는 사람...?',
-        'content': 'AI 합성 아닙니다.',
-        'author': '나팔꽃키우는재미',
-        'date': '9/14',
-        'hasImage': true,
-      },
-    ];
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: posts.length,
-      separatorBuilder: (context, index) => const Divider(
-        height: 1,
-        thickness: 1,
-        color: Color(0xFFE0E0E0),
-      ),
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return _buildPostItem(post);
-      },
-    );
-  }
-
-  Widget _buildPostItem(Map<String, dynamic> post) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (post['hasImage'] == true) ...[
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  'https://via.placeholder.com/80',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, color: Colors.grey),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  post['title'] as String,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  post['content'] as String,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      post['author'] as String,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      post['date'] as String,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return PostListTab(
+      boardId: BoardIds.showOff,
+      boardName: '자랑게시판',
     );
   }
 }
 
-// 궁금해요 게시판 탭 (자랑게시판과 동일한 UI)
+// 궁금해요 게시판 탭
 class QuestionBoardTab extends StatelessWidget {
   const QuestionBoardTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 샘플 데이터
-    final posts = [
-      {
-        'title': '다육이 물주기 궁금해요',
-        'content': '얼마나 자주 물을 주면 될까요?',
-        'author': '초보자',
-        'date': '9/15',
-        'hasImage': false,
-      },
-      {
-        'title': '식물 잎이 노랗게 변했어요',
-        'content': '어떻게 해야 할까요? 도와주세요.',
-        'author': '식물키우기',
-        'date': '9/15',
-        'hasImage': true,
-      },
-    ];
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: posts.length,
-      separatorBuilder: (context, index) => const Divider(
-        height: 1,
-        thickness: 1,
-        color: Color(0xFFE0E0E0),
-      ),
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return _buildPostItem(post);
-      },
-    );
-  }
-
-  Widget _buildPostItem(Map<String, dynamic> post) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (post['hasImage'] == true) ...[
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  'https://via.placeholder.com/80',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, color: Colors.grey),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  post['title'] as String,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  post['content'] as String,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      post['author'] as String,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      post['date'] as String,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return PostListTab(
+      boardId: BoardIds.question,
+      boardName: '궁금해요',
     );
   }
 }
