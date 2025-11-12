@@ -145,9 +145,9 @@ class _SearchScreenState extends State<SearchScreen> {
             )
                 : Column(
               children: [
-                // 상단 고정 영역
+                // 상단 고정 영역 (높이 260)
                 SizedBox(
-                  height: 300,
+                  height: 260,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
@@ -188,7 +188,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               opacity: 0.5,
                               child: SizedBox(
                                 width: double.infinity,
-                                height: 270,
+                                height: 250,
                                 child: Image.asset(
                                   'assets/images/sit.png',
                                   fit: BoxFit.contain,
@@ -229,6 +229,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // 구분선
+                        const Divider(),
+                        const SizedBox(height: 16),
                         // 관리 방법 섹션
                         const Text(
                           '관리 방법',

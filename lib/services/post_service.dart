@@ -175,6 +175,66 @@ class PostService {
     }
   }
 
+  Future<void> createPost({
+    required int boardId,
+    required String title,
+    required String content,
+    String? imageUrl,
+    String? accessToken,
+  }) async {
+    // currentUserId 추출
+    int? currentUserId;
+    if (accessToken != null) {
+      currentUserId = extractUserIdFromToken(accessToken);
+    }
+
+    if (currentUserId == null) {
+      throw Exception('토큰에서 사용자 ID를 추출할 수 없습니다.');
+    }
+
+    final uri = Uri.parse('$baseUrl/api/posts');
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    final body = jsonEncode({
+      'boardId': boardId,
+      'userId': currentUserId,
+      'title': title,
+      'content': content,
+      'imageUrl': imageUrl,
+    });
+
+    try {
+      final resp = await _client.post(uri, headers: headers, body: body).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      // 디버그 로깅
+      print('게시글 작성 API 요청 URL: $uri');
+      print('요청 본문: $body');
+      print('응답 상태 코드: ${resp.statusCode}');
+
+      if (resp.statusCode != 200 && resp.statusCode != 201) {
+        final errorBody = _peek(resp.body);
+        print('에러 응답 본문: $errorBody');
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+    } catch (e) {
+      print('게시글 작성 에러: $e');
+      rethrow;
+    }
+  }
+
   Future<void> deleteComment({
     required int commentId,
     String? accessToken,

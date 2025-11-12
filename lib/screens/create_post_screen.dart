@@ -86,8 +86,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         return;
       }
 
-      // TODO: 게시글 작성 API 호출
-      // await _postService.createPost(...);
+      // 게시글 작성 API 호출
+      await _postService.createPost(
+        boardId: _selectedBoardId,
+        title: title,
+        content: content,
+        imageUrl: null, // 이미지 업로드는 나중에 구현
+        accessToken: token,
+      );
 
       if (!mounted) return;
 
