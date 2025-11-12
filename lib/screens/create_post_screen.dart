@@ -23,11 +23,24 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
   bool _isSubmitting = false;
 
+  // 게시판 목록
+  final List<Map<String, dynamic>> _boards = [
+    {'id': 1, 'name': '자랑게시판'},
+    {'id': 2, 'name': '궁금해요'},
+  ];
+
+  late int _selectedBoardId;
+  late String _selectedBoardName;
+
   @override
   void initState() {
     super.initState();
     const String baseUrl = 'http://10.0.2.2:8080'; // 안드로이드 에뮬레이터용
     _postService = PostService(http.Client(), baseUrl: baseUrl);
+
+    // 초기값 설정
+    _selectedBoardId = widget.boardId;
+    _selectedBoardName = widget.boardName;
   }
 
   @override
@@ -100,7 +113,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
         title: Text(
-          widget.boardName,
+          _selectedBoardName,
           style: const TextStyle(
             color: Color(0xFF6AA84F),
             fontSize: 18,
@@ -114,7 +127,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 게시판 선택 (읽기 전용으로 표시)
+            // 게시판 선택
             const Text(
               '게시판',
               style: TextStyle(
@@ -124,32 +137,73 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.grey[300]!,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    widget.boardName,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
+            GestureDetector(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (context) => Container(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: _boards.map((board) {
+                        final isSelected = board['id'] == _selectedBoardId;
+                        return ListTile(
+                          title: Text(
+                            board['name'] as String,
+                            style: TextStyle(
+                              color: isSelected ? const Color(0xFF6AA84F) : Colors.black87,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          trailing: isSelected
+                              ? const Icon(
+                            Icons.check,
+                            color: Color(0xFF6AA84F),
+                          )
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              _selectedBoardId = board['id'] as int;
+                              _selectedBoardName = board['name'] as String;
+                            });
+                            Navigator.pop(context);
+                          },
+                        );
+                      }).toList(),
                     ),
                   ),
-                  const Spacer(),
-                  const Icon(
-                    Icons.arrow_drop_down,
-                    color: Colors.grey,
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.grey[300]!,
+                    width: 1,
                   ),
-                ],
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      _selectedBoardName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.grey,
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),

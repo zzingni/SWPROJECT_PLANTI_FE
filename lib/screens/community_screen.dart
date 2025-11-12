@@ -6,6 +6,7 @@ import 'package:fe/core/token_storage.dart';
 import '../models/post.dart';
 import '../services/post_service.dart';
 import 'post_screen.dart';
+import 'create_post_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -65,7 +66,26 @@ class _CommunityScreenState extends State<CommunityScreen>
       floatingActionButton: _tabController.index != 2
           ? FloatingActionButton(
         onPressed: () {
-          // 게시글 작성 화면으로 이동
+          final boardId = _tabController.index == 0
+              ? BoardIds.showOff
+              : BoardIds.question;
+          final boardName = _tabController.index == 0
+              ? '자랑게시판'
+              : '궁금해요';
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreatePostScreen(
+                boardId: boardId,
+                boardName: boardName,
+              ),
+            ),
+          ).then((created) {
+            // 게시글이 작성된 경우 목록 새로고침
+            if (created == true) {
+              // TODO: 현재 탭의 게시글 목록 새로고침
+            }
+          });
         },
         backgroundColor: const Color(0xFF6AA84F),
         child: const Icon(Icons.add, color: Colors.white),
