@@ -251,6 +251,7 @@ class _PostScreenState extends State<PostScreen> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
+                              width: 380,
                               height: 200,
                               color: Colors.grey[300],
                               child: const Icon(Icons.image,
@@ -337,7 +338,7 @@ class _PostScreenState extends State<PostScreen> {
                     child: TextField(
                       controller: _commentController,
                       decoration: InputDecoration(
-                        hintText: '댓글을 입력하세요...',
+                        hintText: '댓글을 입력하세요',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: BorderSide(

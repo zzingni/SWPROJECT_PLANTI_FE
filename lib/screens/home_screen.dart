@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fe/screens/serach_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/plant_selection_screen.dart';
@@ -98,6 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 2:
       // 검색 화면으로 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SearchScreen(),
+          ),
+        );
         break;
       case 3:
       // 마이페이지 화면으로 이동
@@ -147,9 +154,46 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: 0,
-        onTabTap: _handleTabTap,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: 0,
+          onTap: _handleTabTap,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: Colors.black87,
+          unselectedItemColor: Colors.grey,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: '홈',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: '커뮤니티',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: '검색',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: '마이페이지',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -166,9 +210,46 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Center(
         child: _AddPlantCard(tokenStorage: widget.tokenStorage),
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: 0,
-        onTabTap: _handleTabTap,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: 0,
+          onTap: _handleTabTap,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: Colors.black87,
+          unselectedItemColor: Colors.grey,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: '홈',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: '커뮤니티',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: '검색',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: '마이페이지',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -460,104 +541,3 @@ class _EnvironmentCard extends StatelessWidget {
   }
 }
 
-// 하단 네비게이션바
-class CustomBottomNavigationBar extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTabTap;
-
-  const CustomBottomNavigationBar({
-    super.key,
-    required this.currentIndex,
-    required this.onTabTap,
-  });
-
-  // _navItems를 클래스 내부에 정의
-  static const List<BottomNavItem> _navItems = [
-    BottomNavItem(
-      icon: Icons.home_rounded,
-      label: '홈',
-    ),
-    BottomNavItem(
-      icon: Icons.people_rounded,
-      label: '커뮤니티',
-    ),
-    BottomNavItem(
-      icon: Icons.search_rounded,
-      label: '검색',
-    ),
-    BottomNavItem(
-      icon: Icons.person_rounded,
-      label: '마이페이지',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF7F8FA),
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFFE2E8F0),
-            width: 1,
-          ),
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: _navItems.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              final isSelected = currentIndex == index;
-
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onTabTap(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          item.icon,
-                          size: 24,
-                          color: isSelected
-                              ? const Color(0xFF2D3748)
-                              : const Color(0xFFA0AEC0),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected
-                                ? const Color(0xFF2D3748)
-                                : const Color(0xFFA0AEC0),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class BottomNavItem {
-  final IconData icon;
-  final String label;
-
-  const BottomNavItem({
-    required this.icon,
-    required this.label,
-  });
-}

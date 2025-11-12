@@ -2,6 +2,7 @@ import 'package:fe/models/palnt_info.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../services/plant_service.dart';
+import 'community_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -142,121 +143,135 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             )
-                : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 대표 캐릭터 이미지
-                  if (_plantInfo?.characterImageUrl != null)
-                    Center(
-                      child: Opacity(
-                        opacity: _plantInfo != null ? 1.0 : 0.5,
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: _plantInfo?.characterImageUrl != null
-                              ? ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              _plantInfo!.characterImageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.image,
+                : Column(
+              children: [
+                // 상단 고정 영역
+                SizedBox(
+                  height: 300,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        // 대표 캐릭터 이미지
+                        if (_plantInfo?.characterImageUrl != null)
+                          Center(
+                            child: Opacity(
+                              opacity: _plantInfo != null ? 1.0 : 0.5,
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 200,
+                                child: _plantInfo?.characterImageUrl != null
+                                    ? Image.network(
+                                  _plantInfo!.characterImageUrl!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.image,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    );
+                                  },
+                                )
+                                    : const Icon(
+                                  Icons.local_florist,
                                   size: 64,
                                   color: Colors.grey,
-                                );
-                              },
+                                ),
+                              ),
                             ),
                           )
-                              : const Icon(
-                            Icons.local_florist,
-                            size: 64,
-                            color: Colors.grey,
+                        else
+                          Center(
+                            child: Opacity(
+                              opacity: 0.5,
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 270,
+                                child: Image.asset(
+                                  'assets/images/sit.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.local_florist,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    )
-                  else
-                    Center(
-                      child: Opacity(
-                        opacity: 0.5,
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.local_florist,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 24),
-                  // 식물 기본 정보 (검색 후에만 표시)
-                  if (_plantInfo != null) ...[
-                    _buildInfoRow('식물명', _plantInfo!.plantName),
-                    const SizedBox(height: 12),
-                    _buildInfoRow('식물학명', _plantInfo!.scientificName),
-                    const SizedBox(height: 12),
-                    _buildInfoRow('과목', _plantInfo!.family),
-                    const SizedBox(height: 12),
-                    _buildInfoRow('물주기', _plantInfo!.watering),
-                    const SizedBox(height: 12),
-                    _buildInfoRow('적정 온도', _plantInfo!.optimalTemperature),
-                    const SizedBox(height: 12),
-                    _buildInfoRow('적정 습도', _plantInfo!.optimalHumidity),
-                    const SizedBox(height: 32),
-                  ],
-                  // 관리 방법 섹션
-                  const Text(
-                    '관리 방법',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2196F3),
+                        const SizedBox(height: 24),
+                        // 식물 기본 정보 (검색 후에만 표시)
+                        if (_plantInfo != null) ...[
+                          _buildInfoRow('식물명', _plantInfo!.plantName),
+                          const SizedBox(height: 12),
+                          _buildInfoRow('식물학명', _plantInfo!.scientificName),
+                          const SizedBox(height: 12),
+                          _buildInfoRow('과목', _plantInfo!.family),
+                          const SizedBox(height: 12),
+                          _buildInfoRow('물주기', _plantInfo!.watering),
+                          const SizedBox(height: 12),
+                          _buildInfoRow('적정 온도', _plantInfo!.optimalTemperature),
+                          const SizedBox(height: 12),
+                          _buildInfoRow('적정 습도', _plantInfo!.optimalHumidity),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // 병충해 관리 정보
-                  _buildSectionTitle('병충해 관리 정보'),
-                  const SizedBox(height: 8),
-                  _buildSectionContent(
-                    _plantInfo?.pestManagement ?? '',
+                ),
+                // 관리 방법 섹션 (스크롤 가능)
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 관리 방법 섹션
+                        const Text(
+                          '관리 방법',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2196F3),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // 병충해 관리 정보
+                        _buildSectionTitle('병충해 관리 정보'),
+                        const SizedBox(height: 8),
+                        _buildSectionContent(
+                          _plantInfo?.pestManagement ?? '',
+                        ),
+                        const SizedBox(height: 24),
+                        // 기능성 정보
+                        _buildSectionTitle('기능성 정보'),
+                        const SizedBox(height: 8),
+                        _buildSectionContent(
+                          _plantInfo?.functionalInfo ?? '',
+                        ),
+                        const SizedBox(height: 24),
+                        // 특별관리 정보
+                        _buildSectionTitle('특별관리 정보'),
+                        const SizedBox(height: 8),
+                        _buildSectionContent(
+                          _plantInfo?.specialCare ?? '',
+                        ),
+                        const SizedBox(height: 24),
+                        // 독성 정보
+                        _buildSectionTitle('독성 정보'),
+                        const SizedBox(height: 8),
+                        _buildSectionContent(
+                          _plantInfo?.toxicity ?? '',
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                  // 기능성 정보
-                  _buildSectionTitle('기능성 정보'),
-                  const SizedBox(height: 8),
-                  _buildSectionContent(
-                    _plantInfo?.functionalInfo ?? '',
-                  ),
-                  const SizedBox(height: 24),
-                  // 특별관리 정보
-                  _buildSectionTitle('특별관리 정보'),
-                  const SizedBox(height: 8),
-                  _buildSectionContent(
-                    _plantInfo?.specialCare ?? '',
-                  ),
-                  const SizedBox(height: 24),
-                  // 독성 정보
-                  _buildSectionTitle('독성 정보'),
-                  const SizedBox(height: 8),
-                  _buildSectionContent(
-                    _plantInfo?.toxicity ?? '',
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -278,7 +293,12 @@ class _SearchScreenState extends State<SearchScreen> {
             if (index == 0) {
               Navigator.of(context).popUntil((route) => route.isFirst);
             } else if (index == 1) {
-              Navigator.pushNamed(context, '/community');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CommunityScreen(),
+                ),
+              );
             } else if (index == 2) {
               // 검색은 이미 현재 화면
             } else if (index == 3) {
