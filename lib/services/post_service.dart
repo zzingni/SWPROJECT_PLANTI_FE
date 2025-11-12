@@ -175,6 +175,43 @@ class PostService {
     }
   }
 
+  Future<void> deleteComment({
+    required int commentId,
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/comments/$commentId');
+
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    try {
+      final resp = await _client.delete(uri, headers: headers).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      // 디버그 로깅
+      print('댓글 삭제 API 요청 URL: $uri');
+      print('응답 상태 코드: ${resp.statusCode}');
+
+      if (resp.statusCode != 200 && resp.statusCode != 204) {
+        final errorBody = _peek(resp.body);
+        print('에러 응답 본문: $errorBody');
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+    } catch (e) {
+      print('댓글 삭제 에러: $e');
+      rethrow;
+    }
+  }
+
   static String _peek(String s, [int n = 150]) {
     return s.length <= n ? s.substring(0, n) : s;
   }
