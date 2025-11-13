@@ -675,11 +675,8 @@ class InformationBoardTab extends StatelessWidget {
       },
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: cards.map((card) => _buildInfoCard(card)).toList(),
-      ),
+    return Column(
+      children: cards.map((card) => _buildInfoCard(card)).toList(),
     );
   }
 
@@ -693,7 +690,7 @@ class InformationBoardTab extends StatelessWidget {
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFFF5F5F5),
