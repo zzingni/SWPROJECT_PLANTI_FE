@@ -692,6 +692,8 @@ class InformationBoardTab extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         padding: const EdgeInsets.all(16),
+        height: 150, // 고정 높이 값
+        width: double.infinity,
         decoration: BoxDecoration(
           color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(12),
