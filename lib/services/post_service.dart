@@ -272,6 +272,47 @@ class PostService {
     }
   }
 
+  /// 게시글 좋아요 토글
+  /// 좋아요를 누르면 좋아요가 추가되고, 이미 좋아요를 눌렀다면 취소됩니다.
+  Future<void> toggleLike({
+    required int postId,
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/posts/$postId/like');
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    try {
+      final resp = await _client.post(uri, headers: headers).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      // 디버그 로깅
+      print('좋아요 토글 API 요청 URL: $uri');
+      print('응답 상태 코드: ${resp.statusCode}');
+
+      if (resp.statusCode != 200 && resp.statusCode != 201 && resp.statusCode != 204) {
+        final errorBody = _peek(resp.body);
+        print('에러 응답 본문: $errorBody');
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+    } catch (e) {
+      print('좋아요 토글 에러: $e');
+      rethrow;
+    }
+  }
+
+
   static String _peek(String s, [int n = 150]) {
     return s.length <= n ? s.substring(0, n) : s;
   }

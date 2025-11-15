@@ -108,6 +108,7 @@ class PostDetail {
   final int likeCount;
   final List<Comment> comments;
   final bool owner; // 게시글 작성자인지 여부
+  final bool isLiked; // 좋아요 상태
 
   PostDetail({
     required this.postId,
@@ -122,7 +123,30 @@ class PostDetail {
     required this.likeCount,
     required this.comments,
     required this.owner,
+    required this.isLiked,
   });
+
+  // 좋아요 상태와 개수를 업데이트한 새 인스턴스 생성
+  PostDetail copyWith({
+    bool? isLiked,
+    int? likeCount,
+  }) {
+    return PostDetail(
+      postId: postId,
+      title: title,
+      content: content,
+      userId: userId,
+      nickname: nickname,
+      imageUrl: imageUrl,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      status: status,
+      likeCount: likeCount ?? this.likeCount,
+      comments: comments,
+      owner: owner,
+      isLiked: isLiked ?? this.isLiked,
+    );
+  }
 
   factory PostDetail.fromJson(Map<String, dynamic> json) {
     return PostDetail(
@@ -142,7 +166,7 @@ class PostDetail {
           .map((x) => Comment.fromJson(x as Map<String, dynamic>))
           .toList(),
       owner: json['owner'] as bool,
+      isLiked: json['isLiked'] as bool? ?? false, // 백엔드에서 제공하지 않으면 기본값 false
     );
   }
 }
-
