@@ -123,6 +123,63 @@ class _PostScreenState extends State<PostScreen> {
     _loadPostDetail();
   }
 
+  Future<void> _toggleLike() async {
+    if (_postDetail == null) return;
+
+    // 낙관적 업데이트: 즉시 UI 업데이트
+    final previousIsLiked = _postDetail!.isLiked;
+    final previousLikeCount = _postDetail!.likeCount;
+
+    setState(() {
+      _postDetail = _postDetail!.copyWith(
+        isLiked: !previousIsLiked,
+        likeCount: previousIsLiked
+            ? previousLikeCount - 1
+            : previousLikeCount + 1,
+      );
+    });
+
+    try {
+      final token = await TokenStorage.accessToken;
+      if (token == null) {
+        if (!mounted) return;
+        // 토큰이 없으면 이전 상태로 롤백
+        setState(() {
+          _postDetail = _postDetail!.copyWith(
+            isLiked: previousIsLiked,
+            likeCount: previousLikeCount,
+          );
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인이 필요합니다.')),
+        );
+        return;
+      }
+
+      await _postService.toggleLike(
+        postId: widget.postId,
+        accessToken: token,
+      );
+
+      // 성공 시 상태는 이미 업데이트됨
+      // 백엔드에서 최신 좋아요 개수를 받아오려면 _loadPostDetail()을 호출할 수 있지만,
+      // 사용자 요청에 따라 좋아요 정보만 보내므로 낙관적 업데이트로 충분
+    } catch (e) {
+      if (!mounted) return;
+      // 에러 발생 시 이전 상태로 롤백
+      setState(() {
+        _postDetail = _postDetail!.copyWith(
+          isLiked: previousIsLiked,
+          likeCount: previousLikeCount,
+        );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('좋아요 처리에 실패했습니다: ${e.toString()}')),
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
