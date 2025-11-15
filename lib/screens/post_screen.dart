@@ -66,8 +66,16 @@ class _PostScreenState extends State<PostScreen> {
 
       if (!mounted) return;
 
+      // 좋아요 개수가 0이면 무조건 좋아요를 누르지 않은 상태로 설정
+      final finalPostDetail = postDetail.likeCount == 0
+          ? postDetail.copyWith(isLiked: false)
+          : postDetail;
+
+      // 디버깅: 최종 상태 확인
+      print('PostScreen._loadPostDetail - likeCount: ${finalPostDetail.likeCount}, isLiked: ${finalPostDetail.isLiked}');
+
       setState(() {
-        _postDetail = postDetail;
+        _postDetail = finalPostDetail;
         _isLoading = false;
       });
     } catch (e) {
@@ -178,7 +186,6 @@ class _PostScreenState extends State<PostScreen> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -321,16 +328,32 @@ class _PostScreenState extends State<PostScreen> {
                       ),
                     const SizedBox(height: 24),
                     // 좋아요
-                    Row(
-                      children: [
-                        const Icon(Icons.favorite,
-                            color: Colors.red, size: 20),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${_postDetail!.likeCount}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
+                    Builder(
+                      builder: (context) {
+                        // 디버깅: UI 렌더링 시 값 확인
+                        print('PostScreen.build - 좋아요 UI 렌더링: isLiked=${_postDetail!.isLiked}, likeCount=${_postDetail!.likeCount}');
+                        return InkWell(
+                          onTap: _toggleLike,
+                          child: Row(
+                            children: [
+                              Icon(
+                                _postDetail!.isLiked
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _postDetail!.isLiked
+                                    ? Colors.red
+                                    : Colors.grey,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${_postDetail!.likeCount}',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     const Divider(),

@@ -149,6 +149,36 @@ class PostDetail {
   }
 
   factory PostDetail.fromJson(Map<String, dynamic> json) {
+    // 백엔드에서 likedByUser 필드로 좋아요 상태를 제공
+    final likedByUserValue = json['likedByUser'];
+    bool isLiked = false;
+
+    // 디버깅: 백엔드 응답 확인
+    print('PostDetail.fromJson - likedByUser 값: $likedByUserValue (타입: ${likedByUserValue.runtimeType})');
+
+    if (likedByUserValue != null) {
+      if (likedByUserValue is bool) {
+        isLiked = likedByUserValue;
+      } else if (likedByUserValue is String) {
+        // 문자열로 오는 경우 처리
+        isLiked = likedByUserValue.toLowerCase() == 'true';
+      }
+    }
+
+    final likeCount = json['likeCount'] as int;
+    print('PostDetail.fromJson - likeCount: $likeCount, 초기 isLiked: $isLiked');
+
+    // 좋아요 개수가 0이면 무조건 좋아요를 누르지 않은 상태로 설정
+    if (likeCount == 0) {
+      isLiked = false;
+      print('PostDetail.fromJson - likeCount가 0이므로 isLiked를 false로 설정');
+    }
+
+    print('PostDetail.fromJson - 최종 isLiked: $isLiked');
+
+    // 백엔드에서 isOwner 필드로 본인 작성 여부를 제공
+    final isOwner = json['isOwner'] as bool? ?? false;
+
     return PostDetail(
       postId: json['postId'] as int,
       title: json['title'] as String,
@@ -161,12 +191,12 @@ class PostDetail {
           ? DateTime.parse(json['updatedAt'] as String)
           : null,
       status: json['status'] as String,
-      likeCount: json['likeCount'] as int,
+      likeCount: likeCount,
       comments: (json['comments'] as List? ?? [])
           .map((x) => Comment.fromJson(x as Map<String, dynamic>))
           .toList(),
-      owner: json['owner'] as bool,
-      isLiked: json['isLiked'] as bool? ?? false, // 백엔드에서 제공하지 않으면 기본값 false
+      owner: isOwner,
+      isLiked: isLiked,
     );
   }
 }

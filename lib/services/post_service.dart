@@ -273,12 +273,22 @@ class PostService {
   }
 
   /// 게시글 좋아요 토글
-  /// 좋아요를 누르면 좋아요가 추가되고, 이미 좋아요를 눌렀다면 취소됩니다.
+  /// 좋아요를 누르면 좋아요가 추가되고, 이미 좋아요를 눌렀다면 취소.
   Future<void> toggleLike({
     required int postId,
     String? accessToken,
   }) async {
-    final uri = Uri.parse('$baseUrl/api/posts/$postId/like');
+    // currentUserId 추출
+    int? currentUserId;
+    if (accessToken != null) {
+      currentUserId = extractUserIdFromToken(accessToken);
+    }
+
+    if (currentUserId == null) {
+      throw Exception('토큰에서 사용자 ID를 추출할 수 없습니다.');
+    }
+
+    final uri = Uri.parse('$baseUrl/api/posts/like');
 
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -289,8 +299,14 @@ class PostService {
       headers['Authorization'] = 'Bearer $accessToken';
     }
 
+    // PostLikeRequest body 생성
+    final body = jsonEncode({
+      'postId': postId,
+      'userId': currentUserId,
+    });
+
     try {
-      final resp = await _client.post(uri, headers: headers).timeout(
+      final resp = await _client.post(uri, headers: headers, body: body).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
@@ -299,6 +315,7 @@ class PostService {
 
       // 디버그 로깅
       print('좋아요 토글 API 요청 URL: $uri');
+      print('요청 본문: $body');
       print('응답 상태 코드: ${resp.statusCode}');
 
       if (resp.statusCode != 200 && resp.statusCode != 201 && resp.statusCode != 204) {
@@ -311,7 +328,6 @@ class PostService {
       rethrow;
     }
   }
-
 
   static String _peek(String s, [int n = 150]) {
     return s.length <= n ? s.substring(0, n) : s;
