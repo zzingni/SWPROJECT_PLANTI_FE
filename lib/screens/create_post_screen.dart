@@ -354,7 +354,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       ),
                     )
                         : Text(
-                      widget.postId != null ? '완료' : '등록',
+                      widget.postId != null ? '수정' : '등록',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

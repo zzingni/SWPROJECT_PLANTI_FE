@@ -5,6 +5,7 @@ import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/plant_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fe/screens/community_screen.dart';
+import 'package:fe/screens/my_page_screen.dart';
 
 
 
@@ -108,6 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
         break;
       case 3:
       // 마이페이지 화면으로 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MyPageScreen(),
+          ),
+        );
         break;
     }
   }

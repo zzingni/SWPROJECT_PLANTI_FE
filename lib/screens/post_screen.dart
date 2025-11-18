@@ -123,7 +123,12 @@ class _PostScreenState extends State<PostScreen> {
       ),
     );
 
-    if (confirmed != true) return;
+    if (confirmed != true) {
+      print('게시글 삭제 취소됨');
+      return;
+    }
+
+    print('게시글 삭제 시작 - postId: ${widget.postId}');
 
     try {
       final token = await TokenStorage.accessToken;
@@ -135,19 +140,27 @@ class _PostScreenState extends State<PostScreen> {
         return;
       }
 
+      print('게시글 삭제 API 호출 전');
       await _postService.deletePost(
         postId: widget.postId,
         accessToken: token,
       );
+      print('게시글 삭제 API 호출 성공');
 
       if (!mounted) return;
 
       // 삭제 성공 시 목록으로 돌아가기 (true는 삭제됨을 의미)
+      print('게시글 삭제 성공 - 목록으로 돌아가기');
       Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('게시글 삭제 에러 발생: $e');
+      print('스택 트레이스: $stackTrace');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('게시글 삭제에 실패했습니다: ${e.toString()}')),
+        SnackBar(
+          content: Text('게시글 삭제에 실패했습니다: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+        ),
       );
     }
   }
