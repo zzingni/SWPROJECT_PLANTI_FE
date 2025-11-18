@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fe/core/token_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../services/post_service.dart';
+import 'chatbot_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -246,13 +248,15 @@ class _MyPageScreenState extends State<MyPageScreen> {
           icon: Icons.chat_bubble_outline,
           title: 'AI 챗봇 이용하기',
           onTap: () {
-            // TODO: AI 챗봇 화면으로 이동
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('AI 챗봇 기능은 준비 중입니다.')),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ChatbotScreen(),
+              ),
             );
           },
         ),
-        const Divider(height: 1),
+        _buildDivider(),
         _buildMenuItem(
           icon: Icons.article_outlined,
           title: '내가 쓴 게시글',
@@ -263,7 +267,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
             );
           },
         ),
-        const Divider(height: 1),
+        _buildDivider(),
         _buildMenuItem(
           icon: Icons.comment_outlined,
           title: '내가 쓴 댓글',
@@ -274,7 +278,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
             );
           },
         ),
-        const Divider(height: 1),
+        _buildDivider(),
         _buildMenuItem(
           icon: Icons.description_outlined,
           title: '개인정보제공이용동의',
@@ -285,14 +289,14 @@ class _MyPageScreenState extends State<MyPageScreen> {
             );
           },
         ),
-        const Divider(height: 1),
+        _buildDivider(),
         _buildMenuItem(
           icon: Icons.person_remove_outlined,
           title: '회원탈퇴',
           onTap: _handleWithdrawal,
           textColor: Colors.red,
         ),
-        const Divider(height: 1),
+        _buildDivider(),
         _buildMenuItem(
           icon: Icons.logout,
           title: '로그아웃',
@@ -300,6 +304,16 @@ class _MyPageScreenState extends State<MyPageScreen> {
           textColor: Colors.red,
         ),
       ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return const Divider(
+      height: 1,
+      thickness: 1,
+      indent: 0,
+      endIndent: 0,
+      color: Color(0xFFE0E0E0),
     );
   }
 
@@ -312,7 +326,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
         child: Row(
           children: [
             Icon(
