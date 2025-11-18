@@ -72,7 +72,7 @@ class _PostScreenState extends State<PostScreen> {
           : postDetail;
 
       // 디버깅: 최종 상태 확인
-      print('PostScreen._loadPostDetail - likeCount: ${finalPostDetail.likeCount}, isLiked: ${finalPostDetail.isLiked}');
+      print('PostScreen._loadPostDetail - likeCount: ${finalPostDetail.likeCount}, isLiked: ${finalPostDetail.isLiked}, owner: ${finalPostDetail.owner}');
 
       setState(() {
         _postDetail = finalPostDetail;
@@ -125,10 +125,38 @@ class _PostScreenState extends State<PostScreen> {
     final content = _commentController.text.trim();
     if (content.isEmpty) return;
 
-    // TODO: 댓글 작성 API 호출
-    _commentController.clear();
-    // 댓글 작성 후 목록 새로고침
-    _loadPostDetail();
+    try {
+      final token = await TokenStorage.accessToken;
+      if (token == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인이 필요합니다.')),
+        );
+        return;
+      }
+
+      await _postService.createComment(
+        postId: widget.postId,
+        content: content,
+        accessToken: token,
+      );
+
+      if (!mounted) return;
+
+      _commentController.clear();
+
+      // 댓글 작성 후 게시글 상세 정보 새로고침
+      _loadPostDetail();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글이 작성되었습니다.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('댓글 작성에 실패했습니다: ${e.toString()}')),
+      );
+    }
   }
 
   Future<void> _toggleLike() async {
@@ -460,7 +488,7 @@ class _PostScreenState extends State<PostScreen> {
     final isMyComment = comment.owner;
 
     return GestureDetector(
-      onLongPress: isMyComment ? () => _showDeleteCommentDialog(comment) : null,
+      onLongPress: isMyComment ? () => _showCommentActionDialog(comment) : null,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: Row(
@@ -538,6 +566,113 @@ class _PostScreenState extends State<PostScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showCommentActionDialog(Comment comment) async {
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFF0F8F0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text('댓글'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: Color(0xFF6AA84F)),
+              title: const Text('수정'),
+              onTap: () => Navigator.pop(context, 'edit'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('삭제'),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+        ],
+      ),
+    );
+
+    if (action == 'edit') {
+      _showEditCommentDialog(comment);
+    } else if (action == 'delete') {
+      _showDeleteCommentDialog(comment);
+    }
+  }
+
+  Future<void> _showEditCommentDialog(Comment comment) async {
+    final TextEditingController editController = TextEditingController(text: comment.content);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFF0F8F0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text('댓글 수정'),
+        content: TextField(
+          controller: editController,
+          decoration: const InputDecoration(
+            hintText: '댓글을 입력하세요',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, editController.text.trim()),
+            child: const Text('수정'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || result.isEmpty) return;
+
+    try {
+      final token = await TokenStorage.accessToken;
+      if (token == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인이 필요합니다.')),
+        );
+        return;
+      }
+
+      await _postService.updateComment(
+        commentId: comment.commentId,
+        content: result,
+        accessToken: token,
+      );
+
+      if (!mounted) return;
+
+      // 댓글 수정 후 게시글 상세 정보 새로고침
+      _loadPostDetail();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('댓글이 수정되었습니다.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('댓글 수정에 실패했습니다: ${e.toString()}')),
+      );
+    }
   }
 
   Future<void> _showDeleteCommentDialog(Comment comment) async {

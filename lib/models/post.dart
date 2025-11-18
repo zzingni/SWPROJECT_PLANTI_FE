@@ -177,7 +177,22 @@ class PostDetail {
     print('PostDetail.fromJson - 최종 isLiked: $isLiked');
 
     // 백엔드에서 isOwner 필드로 본인 작성 여부를 제공
-    final isOwner = json['isOwner'] as bool? ?? false;
+    final isOwnerValue = json['isOwner'];
+    bool isOwner = false;
+
+    // 디버깅: 백엔드 응답 확인
+    print('PostDetail.fromJson - isOwner 값: $isOwnerValue (타입: ${isOwnerValue.runtimeType})');
+
+    if (isOwnerValue != null) {
+      if (isOwnerValue is bool) {
+        isOwner = isOwnerValue;
+      } else if (isOwnerValue is String) {
+        // 문자열로 오는 경우 처리
+        isOwner = isOwnerValue.toLowerCase() == 'true';
+      }
+    }
+
+    print('PostDetail.fromJson - 최종 isOwner: $isOwner');
 
     return PostDetail(
       postId: json['postId'] as int,
@@ -200,3 +215,4 @@ class PostDetail {
     );
   }
 }
+

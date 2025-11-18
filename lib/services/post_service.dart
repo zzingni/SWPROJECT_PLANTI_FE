@@ -235,6 +235,107 @@ class PostService {
     }
   }
 
+  Future<void> createComment({
+    required int postId,
+    required String content,
+    String? accessToken,
+  }) async {
+    // currentUserId 추출
+    int? currentUserId;
+    if (accessToken != null) {
+      currentUserId = extractUserIdFromToken(accessToken);
+    }
+
+    if (currentUserId == null) {
+      throw Exception('토큰에서 사용자 ID를 추출할 수 없습니다.');
+    }
+
+    final uri = Uri.parse('$baseUrl/api/comments');
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    final body = jsonEncode({
+      'postId': postId,
+      'userId': currentUserId,
+      'content': content,
+    });
+
+    try {
+      final resp = await _client.post(uri, headers: headers, body: body).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      // 디버그 로깅
+      print('댓글 작성 API 요청 URL: $uri');
+      print('요청 본문: $body');
+      print('응답 상태 코드: ${resp.statusCode}');
+
+      if (resp.statusCode != 200 && resp.statusCode != 201) {
+        final errorBody = _peek(resp.body);
+        print('에러 응답 본문: $errorBody');
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+    } catch (e) {
+      print('댓글 작성 에러: $e');
+      rethrow;
+    }
+  }
+
+
+  Future<void> updateComment({
+    required int commentId,
+    required String content,
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/comments/$commentId');
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    final body = jsonEncode({
+      'content': content,
+    });
+
+    try {
+      final resp = await _client.put(uri, headers: headers, body: body).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      // 디버그 로깅
+      print('댓글 수정 API 요청 URL: $uri');
+      print('요청 본문: $body');
+      print('응답 상태 코드: ${resp.statusCode}');
+
+      if (resp.statusCode != 200 && resp.statusCode != 204) {
+        final errorBody = _peek(resp.body);
+        print('에러 응답 본문: $errorBody');
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+    } catch (e) {
+      print('댓글 수정 에러: $e');
+      rethrow;
+    }
+  }
+
   Future<void> deleteComment({
     required int commentId,
     String? accessToken,
