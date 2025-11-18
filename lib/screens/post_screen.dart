@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:fe/core/token_storage.dart';
 import '../models/post.dart' show Post, PostDetail, Comment;
 import '../services/post_service.dart';
+import 'create_post_screen.dart';
 
 class PostScreen extends StatefulWidget {
   final int postId;
@@ -102,6 +103,10 @@ class _PostScreenState extends State<PostScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFF0F8F0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         title: const Text('게시글 삭제'),
         content: const Text('정말 삭제하시겠습니까?'),
         actions: [
@@ -120,16 +125,53 @@ class _PostScreenState extends State<PostScreen> {
 
     if (confirmed != true) return;
 
-    // TODO: 삭제 API 호출
-    // 삭제 성공 시 목록으로 돌아가기
-    if (mounted) {
-      Navigator.pop(context, true); // true는 삭제됨을 의미
+    try {
+      final token = await TokenStorage.accessToken;
+      if (token == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인이 필요합니다.')),
+        );
+        return;
+      }
+
+      await _postService.deletePost(
+        postId: widget.postId,
+        accessToken: token,
+      );
+
+      if (!mounted) return;
+
+      // 삭제 성공 시 목록으로 돌아가기 (true는 삭제됨을 의미)
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('게시글 삭제에 실패했습니다: ${e.toString()}')),
+      );
     }
   }
 
   Future<void> _editPost() async {
-    // TODO: 수정 화면으로 이동
-    // Navigator.push(...)
+    if (_postDetail == null) return;
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreatePostScreen(
+          boardId: widget.boardId,
+          boardName: widget.boardId == 1 ? '자랑게시판' : widget.boardId == 2 ? '궁금해요' : '정보게시판',
+          postId: _postDetail!.postId,
+          initialTitle: _postDetail!.title,
+          initialContent: _postDetail!.content,
+        ),
+      ),
+    );
+
+    // 수정 성공 시 게시글 상세 정보 새로고침
+    if (result == true && mounted) {
+      _loadPostDetail();
+    }
   }
 
   Future<void> _addComment() async {
