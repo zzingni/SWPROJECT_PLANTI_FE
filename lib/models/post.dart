@@ -130,6 +130,7 @@ class PostDetail {
   PostDetail copyWith({
     bool? isLiked,
     int? likeCount,
+    bool? owner,
   }) {
     return PostDetail(
       postId: postId,
@@ -143,7 +144,7 @@ class PostDetail {
       status: status,
       likeCount: likeCount ?? this.likeCount,
       comments: comments,
-      owner: owner,
+      owner: owner ?? this.owner,
       isLiked: isLiked ?? this.isLiked,
     );
   }

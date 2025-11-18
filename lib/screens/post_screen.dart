@@ -66,13 +66,24 @@ class _PostScreenState extends State<PostScreen> {
 
       if (!mounted) return;
 
+      // 백엔드에서 isOwner를 보내주지 않는 경우를 대비해
+      // 현재 사용자 ID와 게시글 작성자 ID를 비교해서 owner 판단
+      final currentUserId = extractUserIdFromToken(token);
+      final isOwner = currentUserId != null && currentUserId == postDetail.userId;
+
+      // 디버깅: owner 판단 로직 확인
+      print('PostScreen._loadPostDetail - currentUserId: $currentUserId (타입: ${currentUserId.runtimeType})');
+      print('PostScreen._loadPostDetail - postDetail.userId: ${postDetail.userId} (타입: ${postDetail.userId.runtimeType})');
+      print('PostScreen._loadPostDetail - isOwner 계산: $isOwner');
+
       // 좋아요 개수가 0이면 무조건 좋아요를 누르지 않은 상태로 설정
-      final finalPostDetail = postDetail.likeCount == 0
-          ? postDetail.copyWith(isLiked: false)
-          : postDetail;
+      var finalPostDetail = postDetail.likeCount == 0
+          ? postDetail.copyWith(isLiked: false, owner: isOwner)
+          : postDetail.copyWith(owner: isOwner);
 
       // 디버깅: 최종 상태 확인
-      print('PostScreen._loadPostDetail - likeCount: ${finalPostDetail.likeCount}, isLiked: ${finalPostDetail.isLiked}, owner: ${finalPostDetail.owner}');
+      print('PostScreen._loadPostDetail - 최종 owner: ${finalPostDetail.owner}');
+      print('PostScreen._loadPostDetail - likeCount: ${finalPostDetail.likeCount}, isLiked: ${finalPostDetail.isLiked}');
 
       setState(() {
         _postDetail = finalPostDetail;
@@ -223,21 +234,26 @@ class _PostScreenState extends State<PostScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        actions: _postDetail?.owner == true
-            ? [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _editPost,
-            tooltip: '수정',
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _deletePost,
-            tooltip: '삭제',
-            color: Colors.red,
-          ),
-        ]
-            : null,
+        actions: () {
+          // 디버깅: owner 값 확인
+          final isOwner = _postDetail?.owner ?? false;
+          print('PostScreen.build - AppBar actions 체크: owner=$isOwner');
+          return isOwner
+              ? [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: _editPost,
+              tooltip: '수정',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deletePost,
+              tooltip: '삭제',
+              color: Colors.red,
+            ),
+          ]
+              : null;
+        }(),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -679,7 +695,7 @@ class _PostScreenState extends State<PostScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFF0F8F0), // 연한 녹색 파스텔톤 배경
+        backgroundColor: const Color(0xFFF0F8F0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
