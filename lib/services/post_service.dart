@@ -373,6 +373,92 @@ class PostService {
     }
   }
 
+  Future<void> updatePost({
+    required int postId,
+    required String title,
+    required String content,
+    String? imageUrl,
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/posts/$postId');
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    final body = jsonEncode({
+      'title': title,
+      'content': content,
+      'imageUrl': imageUrl,
+    });
+
+    try {
+      final resp = await _client.put(uri, headers: headers, body: body).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      // 디버그 로깅
+      print('게시글 수정 API 요청 URL: $uri');
+      print('요청 본문: $body');
+      print('응답 상태 코드: ${resp.statusCode}');
+
+      if (resp.statusCode != 200 && resp.statusCode != 201) {
+        final errorBody = _peek(resp.body);
+        print('에러 응답 본문: $errorBody');
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+    } catch (e) {
+      print('게시글 수정 에러: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deletePost({
+    required int postId,
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/posts/$postId');
+
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    try {
+      final resp = await _client.delete(uri, headers: headers).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      // 디버그 로깅
+      print('게시글 삭제 API 요청 URL: $uri');
+      print('응답 상태 코드: ${resp.statusCode}');
+
+      if (resp.statusCode != 200 && resp.statusCode != 204) {
+        final errorBody = _peek(resp.body);
+        print('에러 응답 본문: $errorBody');
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+    } catch (e) {
+      print('게시글 삭제 에러: $e');
+      rethrow;
+    }
+  }
+
+
   /// 게시글 좋아요 토글
   /// 좋아요를 누르면 좋아요가 추가되고, 이미 좋아요를 눌렀다면 취소.
   Future<void> toggleLike({
