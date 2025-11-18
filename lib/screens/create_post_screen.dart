@@ -6,11 +6,17 @@ import '../services/post_service.dart';
 class CreatePostScreen extends StatefulWidget {
   final int boardId;
   final String boardName;
+  final int? postId; // 수정 모드일 때 게시글 ID
+  final String? initialTitle; // 수정 모드일 때 초기 제목
+  final String? initialContent; // 수정 모드일 때 초기 내용
 
   const CreatePostScreen({
     super.key,
     required this.boardId,
     required this.boardName,
+    this.postId,
+    this.initialTitle,
+    this.initialContent,
   });
 
   @override
@@ -41,6 +47,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     // 초기값 설정
     _selectedBoardId = widget.boardId;
     _selectedBoardName = widget.boardName;
+
+    // 수정 모드일 때 초기값 설정
+    if (widget.initialTitle != null) {
+      _titleController.text = widget.initialTitle!;
+    }
+    if (widget.initialContent != null) {
+      _contentController.text = widget.initialContent!;
+    }
   }
 
   @override
@@ -86,19 +100,31 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         return;
       }
 
-      // 게시글 작성 API 호출
-      await _postService.createPost(
-        boardId: _selectedBoardId,
-        title: title,
-        content: content,
-        imageUrl: null, // 이미지 업로드는 나중에 구현
-        accessToken: token,
-      );
+      // 수정 모드인지 확인
+      if (widget.postId != null) {
+        // 게시글 수정 API 호출
+        await _postService.updatePost(
+          postId: widget.postId!,
+          title: title,
+          content: content,
+          imageUrl: null, // 이미지 업로드는 나중에 구현
+          accessToken: token,
+        );
+      } else {
+        // 게시글 작성 API 호출
+        await _postService.createPost(
+          boardId: _selectedBoardId,
+          title: title,
+          content: content,
+          imageUrl: null, // 이미지 업로드는 나중에 구현
+          accessToken: token,
+        );
+      }
 
       if (!mounted) return;
 
-      // 작성 성공 시 이전 화면으로 돌아가기
-      Navigator.pop(context, true); // true는 게시글이 작성됨을 의미
+      // 작성/수정 성공 시 이전 화면으로 돌아가기
+      Navigator.pop(context, true); // true는 게시글이 작성/수정됨을 의미
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -133,86 +159,88 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 게시판 선택
-            const Text(
-              '게시판',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  builder: (context) => Container(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: _boards.map((board) {
-                        final isSelected = board['id'] == _selectedBoardId;
-                        return ListTile(
-                          title: Text(
-                            board['name'] as String,
-                            style: TextStyle(
-                              color: isSelected ? const Color(0xFF6AA84F) : Colors.black87,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                          trailing: isSelected
-                              ? const Icon(
-                            Icons.check,
-                            color: Color(0xFF6AA84F),
-                          )
-                              : null,
-                          onTap: () {
-                            setState(() {
-                              _selectedBoardId = board['id'] as int;
-                              _selectedBoardName = board['name'] as String;
-                            });
-                            Navigator.pop(context);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.grey[300]!,
-                    width: 1,
-                  ),
+            // 수정 모드가 아닐 때만 게시판 선택 표시
+            if (widget.postId == null) ...[
+              const Text(
+                '게시판',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
                 ),
-                child: Row(
-                  children: [
-                    Text(
-                      _selectedBoardName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (context) => Container(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: _boards.map((board) {
+                          final isSelected = board['id'] == _selectedBoardId;
+                          return ListTile(
+                            title: Text(
+                              board['name'] as String,
+                              style: TextStyle(
+                                color: isSelected ? const Color(0xFF6AA84F) : Colors.black87,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                              Icons.check,
+                              color: Color(0xFF6AA84F),
+                            )
+                                : null,
+                            onTap: () {
+                              setState(() {
+                                _selectedBoardId = board['id'] as int;
+                                _selectedBoardName = board['name'] as String;
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        }).toList(),
                       ),
                     ),
-                    const Spacer(),
-                    const Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.grey,
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.grey[300]!,
+                      width: 1,
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        _selectedBoardName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(
+                        Icons.arrow_drop_down,
+                        color: Colors.grey,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
+            ],
             // 제목 입력
             const Text(
               '제목',
@@ -325,9 +353,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                        : const Text(
-                      '등록',
-                      style: TextStyle(
+                        : Text(
+                      widget.postId != null ? '완료' : '등록',
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
