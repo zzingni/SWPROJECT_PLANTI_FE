@@ -91,59 +91,6 @@ class _CommunityScreenState extends State<CommunityScreen>
         child: const Icon(Icons.add, color: Colors.white),
       )
           : null,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: 1, // 커뮤니티가 선택된 상태
-          onTap: (index) {
-            // 네비게이션 처리
-            if (index == 0) {
-              // 홈으로 이동
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            } else if (index == 1) {
-              // 커뮤니티는 이미 현재 화면
-            } else if (index == 2) {
-              // 검색 화면으로 이동 (필요시 구현)
-            } else if (index == 3) {
-              // 마이페이지로 이동 (필요시 구현)
-            }
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: Colors.black87,
-          unselectedItemColor: Colors.grey,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: '홈',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people),
-              label: '커뮤니티',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: '검색',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: '마이페이지',
-            ),
-          ],
-        ),
-      ),
     );
   }
 

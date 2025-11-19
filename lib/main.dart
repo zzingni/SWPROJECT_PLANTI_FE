@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:fe/notification/push_notification_service.dart';
 import 'package:fe/screens/home_screen.dart';
 import 'package:fe/screens/login_screen.dart';
+import 'package:fe/screens/main_navigation_screen.dart';
 import 'package:fe/screens/main_screen.dart';
 import 'package:fe/screens/plant_name_input_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -117,17 +118,18 @@ class _SplashGateState extends State<SplashGate> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List<dynamic>;
         if (data.isNotEmpty) {
-          // 반려식물 존재 → HomeScreen
-          final plant = data.first;
-          return HomeScreen(
+          // 반려식물 존재 → MainNavigationScreen의 홈(index 0)으로 이동
+          // 이 경우 HomeScreen에서 plant 정보가 로드됨
+          return MainNavigationScreen(
             tokenStorage: _tokenStorage,
-            nickname: plant['plantNickName'],
+            initialIndex: 0,
           );
         } else {
-          // 반려식물 없음 → 이름 입력 화면
-          return PlantNameInputScreen(
-            selectedPlantId: 0, // 기본값, 사용자가 선택 후 바뀜
+          // 반려식물 없음 → MainNavigationScreen의 홈(index 0)으로 이동
+          // HomeScreen에서 반려식물 추가 화면이 노출됨
+          return MainNavigationScreen(
             tokenStorage: _tokenStorage,
+            initialIndex: 0,
           );
         }
       } else {

@@ -1,3 +1,4 @@
+import 'package:fe/screens/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../core/auth_service.dart';
@@ -34,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (context) => HomeScreen(tokenStorage: widget.tokenStorage),
+            builder: (context) => MainNavigationScreen(tokenStorage: widget.tokenStorage),
           ),
               (route) => false,
         );
