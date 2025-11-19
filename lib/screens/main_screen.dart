@@ -3,7 +3,6 @@ import 'package:fe/screens/login_screen.dart';
 import 'package:fe/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'home_screen.dart'; // HomeScreen은 기존 파일 그대로 사용
 
 class MainScreen extends StatelessWidget {
   /// 디버그 중 로그인/스플래시 건너뛰고 바로 Home으로 들어가려면 true

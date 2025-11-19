@@ -756,4 +756,3 @@ class InformationBoardTab extends StatelessWidget {
     );
   }
 }
-

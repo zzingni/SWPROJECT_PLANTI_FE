@@ -2,7 +2,6 @@ import 'package:fe/models/palnt_info.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../services/plant_service.dart';
-import 'community_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -63,15 +62,12 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
         title: const Text(
           '식물도감',
           style: TextStyle(
@@ -278,62 +274,6 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: 2, // 검색이 선택된 상태
-          onTap: (index) {
-            if (index == 0) {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            } else if (index == 1) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CommunityScreen(),
-                ),
-              );
-            } else if (index == 2) {
-              // 검색은 이미 현재 화면
-            } else if (index == 3) {
-              // 마이페이지로 이동 (필요시 구현)
-            }
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: Colors.black87,
-          unselectedItemColor: Colors.grey,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: '홈',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people),
-              label: '커뮤니티',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: '검색',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: '마이페이지',
-            ),
-          ],
-        ),
       ),
     );
   }
