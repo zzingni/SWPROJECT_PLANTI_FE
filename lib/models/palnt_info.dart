@@ -1,44 +1,61 @@
 class PlantInfo {
-  final String plantName; // 식물명
-  final String scientificName; // 식물학명
-  final String family; // 과목
-  final String watering; // 물주기
-  final String optimalTemperature; // 적정 온도
-  final String optimalHumidity; // 적정 습도
-  final String pestManagement; // 병충해 관리 정보
-  final String functionalInfo; // 기능성 정보
-  final String specialCare; // 특별관리 정보
-  final String toxicity; // 독성 정보
-  final String? characterImageUrl; // 대표 캐릭터 이미지 URL
+  final String id;
+  final String plantName;         // backend 'name'
+  final String? scientificName;
+  final String? family;
+  final String? watering;
+  final String? optimalTemperature; // backend 'temperature'
+  final String? optimalHumidity;    // backend 'humidity'
+  final String? pestManagement;     // backend 'pestControl'
+  final String? functionalInfo;    // backend 'functionality'
+  final String? specialCare;
+  final String? toxicity;
+  final String? characterImageUrl; // backend 없으면 null 또는 서버에 추가 요청
 
   PlantInfo({
+    required this.id,
     required this.plantName,
-    required this.scientificName,
-    required this.family,
-    required this.watering,
-    required this.optimalTemperature,
-    required this.optimalHumidity,
-    required this.pestManagement,
-    required this.functionalInfo,
-    required this.specialCare,
-    required this.toxicity,
+    this.scientificName,
+    this.family,
+    this.watering,
+    this.optimalTemperature,
+    this.optimalHumidity,
+    this.pestManagement,
+    this.functionalInfo,
+    this.specialCare,
+    this.toxicity,
     this.characterImageUrl,
   });
 
   factory PlantInfo.fromJson(Map<String, dynamic> json) {
     return PlantInfo(
-      plantName: json['plantName'] as String? ?? '',
-      scientificName: json['scientificName'] as String? ?? '',
-      family: json['family'] as String? ?? '',
-      watering: json['watering'] as String? ?? '',
-      optimalTemperature: json['optimalTemperature'] as String? ?? '',
-      optimalHumidity: json['optimalHumidity'] as String? ?? '',
-      pestManagement: json['pestManagement'] as String? ?? '',
-      functionalInfo: json['functionalInfo'] as String? ?? '',
-      specialCare: json['specialCare'] as String? ?? '',
-      toxicity: json['toxicity'] as String? ?? '',
-      characterImageUrl: json['characterImageUrl'] as String?,
+      id: json['id']?.toString() ?? '',
+      plantName: json['name'] ?? json['plantName'] ?? '',
+      scientificName: json['scientificName'] as String?,
+      family: json['family'] as String?,
+      watering: json['watering'] as String?,
+      optimalTemperature: json['temperature'] as String?,
+      optimalHumidity: json['humidity'] as String?,
+      pestManagement: json['pestControl'] as String?,
+      functionalInfo: json['functionality'] as String?,
+      specialCare: json['specialCare'] as String?,
+      toxicity: json['toxicity'] as String?,
+      characterImageUrl: json['characterImageUrl'] as String?, // 서버에 없다면 null
     );
   }
-}
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': plantName,
+    'scientificName': scientificName,
+    'family': family,
+    'watering': watering,
+    'temperature': optimalTemperature,
+    'humidity': optimalHumidity,
+    'pestControl': pestManagement,
+    'functionality': functionalInfo,
+    'specialCare': specialCare,
+    'toxicity': toxicity,
+    'characterImageUrl': characterImageUrl,
+  };
+}

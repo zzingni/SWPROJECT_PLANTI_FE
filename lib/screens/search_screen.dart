@@ -31,11 +31,11 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
+  String _safeString(String? s) => (s == null || s.trim().isEmpty) ? '정보 없음' : s;
+
   Future<void> _searchPlant() async {
     final query = _searchController.text.trim();
-    if (query.isEmpty) {
-      return;
-    }
+    if (query.isEmpty) return;
 
     setState(() {
       _isLoading = true;
@@ -111,6 +111,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
           ),
+
           // 내용 영역
           Expanded(
             child: _isLoading
@@ -141,83 +142,33 @@ class _SearchScreenState extends State<SearchScreen> {
             )
                 : Column(
               children: [
-                // 상단 고정 영역 (높이 260)
-                SizedBox(
-                  height: 260,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        // 대표 캐릭터 이미지
-                        if (_plantInfo?.characterImageUrl != null)
-                          Center(
-                            child: Opacity(
-                              opacity: _plantInfo != null ? 1.0 : 0.5,
-                              child: SizedBox(
-                                width: double.infinity,
-                                height: 200,
-                                child: _plantInfo?.characterImageUrl != null
-                                    ? Image.network(
-                                  _plantInfo!.characterImageUrl!,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(
-                                      Icons.image,
-                                      size: 64,
-                                      color: Colors.grey,
-                                    );
-                                  },
-                                )
-                                    : const Icon(
-                                  Icons.local_florist,
-                                  size: 64,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          Center(
-                            child: Opacity(
-                              opacity: 0.5,
-                              child: SizedBox(
-                                width: double.infinity,
-                                height: 250,
-                                child: Image.asset(
-                                  'assets/images/sit.png',
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(
-                                      Icons.local_florist,
-                                      size: 64,
-                                      color: Colors.grey,
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 24),
-                        // 식물 기본 정보 (검색 후에만 표시)
-                        if (_plantInfo != null) ...[
-                          _buildInfoRow('식물명', _plantInfo!.plantName),
-                          const SizedBox(height: 12),
-                          _buildInfoRow('식물학명', _plantInfo!.scientificName),
-                          const SizedBox(height: 12),
-                          _buildInfoRow('과목', _plantInfo!.family),
-                          const SizedBox(height: 12),
-                          _buildInfoRow('물주기', _plantInfo!.watering),
-                          const SizedBox(height: 12),
-                          _buildInfoRow('적정 온도', _plantInfo!.optimalTemperature),
-                          const SizedBox(height: 12),
-                          _buildInfoRow('적정 습도', _plantInfo!.optimalHumidity),
-                        ],
+                // 상단: 식물 기본 정보 (이미지 제거, 바로 표시)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      if (_plantInfo != null) ...[
+                        _buildInfoRow('식물명', _safeString(_plantInfo!.plantName)),
+                        const SizedBox(height: 12),
+                        _buildInfoRow('식물학명', _safeString(_plantInfo!.scientificName)),
+                        const SizedBox(height: 12),
+                        _buildInfoRow('과목', _safeString(_plantInfo!.family)),
+                        const SizedBox(height: 12),
+                        _buildInfoRow('물주기', _safeString(_plantInfo!.watering)),
+                        const SizedBox(height: 12),
+                        _buildInfoRow('적정 온도', _safeString(_plantInfo!.optimalTemperature)),
+                        const SizedBox(height: 12),
+                        _buildInfoRow('적정 습도', _safeString(_plantInfo!.optimalHumidity)),
                       ],
-                    ),
+                    ],
                   ),
                 ),
+
+                const SizedBox(height: 8),
+                const Divider(),
+
                 // 관리 방법 섹션 (스크롤 가능)
                 Expanded(
                   child: SingleChildScrollView(
@@ -225,10 +176,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 구분선
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        // 관리 방법 섹션
+                        const SizedBox(height: 8),
                         const Text(
                           '관리 방법',
                           style: TextStyle(
@@ -238,33 +186,21 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // 병충해 관리 정보
                         _buildSectionTitle('병충해 관리 정보'),
                         const SizedBox(height: 8),
-                        _buildSectionContent(
-                          _plantInfo?.pestManagement ?? '',
-                        ),
+                        _buildSectionContent(_plantInfo?.pestManagement ?? ''),
                         const SizedBox(height: 24),
-                        // 기능성 정보
                         _buildSectionTitle('기능성 정보'),
                         const SizedBox(height: 8),
-                        _buildSectionContent(
-                          _plantInfo?.functionalInfo ?? '',
-                        ),
+                        _buildSectionContent(_plantInfo?.functionalInfo ?? ''),
                         const SizedBox(height: 24),
-                        // 특별관리 정보
                         _buildSectionTitle('특별관리 정보'),
                         const SizedBox(height: 8),
-                        _buildSectionContent(
-                          _plantInfo?.specialCare ?? '',
-                        ),
+                        _buildSectionContent(_plantInfo?.specialCare ?? ''),
                         const SizedBox(height: 24),
-                        // 독성 정보
                         _buildSectionTitle('독성 정보'),
                         const SizedBox(height: 8),
-                        _buildSectionContent(
-                          _plantInfo?.toxicity ?? '',
-                        ),
+                        _buildSectionContent(_plantInfo?.toxicity ?? ''),
                         const SizedBox(height: 24),
                       ],
                     ),
@@ -283,7 +219,7 @@ class _SearchScreenState extends State<SearchScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 80,
+          width: 90,
           child: Text(
             label,
             style: const TextStyle(
@@ -318,6 +254,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSectionContent(String content) {
+    final display = (content.trim().isEmpty) ? '정보 없음' : content;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -326,14 +263,13 @@ class _SearchScreenState extends State<SearchScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        content.isEmpty ? ' ' : content,
+        display,
         style: TextStyle(
           fontSize: 14,
           height: 1.6,
-          color: content.isEmpty ? Colors.transparent : Colors.black87,
+          color: display == '정보 없음' ? Colors.black38 : Colors.black87,
         ),
       ),
     );
   }
 }
-
