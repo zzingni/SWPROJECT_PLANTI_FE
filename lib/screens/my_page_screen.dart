@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/post_service.dart';
 import 'chatbot_screen.dart';
+import 'watering_history_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -253,6 +254,19 @@ class _MyPageScreenState extends State<MyPageScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => const ChatbotScreen(),
+              ),
+            );
+          },
+        ),
+        _buildDivider(),
+        _buildMenuItem(
+          icon: Icons.water_drop_outlined,
+          title: '물주기 이력',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const WateringHistoryScreen(),
               ),
             );
           },
