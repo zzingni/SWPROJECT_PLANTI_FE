@@ -180,4 +180,3 @@ Future<void> navigateWithFadePush(BuildContext context, Widget page,
     ),
   ));
 }
-

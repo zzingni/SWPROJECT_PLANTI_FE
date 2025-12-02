@@ -5,6 +5,8 @@ import 'dart:convert';
 import '../services/post_service.dart';
 import 'chatbot_screen.dart';
 import 'watering_history_screen.dart';
+import 'my_posts_screen.dart';
+import 'my_comments_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -276,9 +278,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
           icon: Icons.article_outlined,
           title: '내가 쓴 게시글',
           onTap: () {
-            // TODO: 내가 쓴 게시글 화면으로 이동
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('내가 쓴 게시글 기능은 준비 중입니다.')),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MyPostsScreen(),
+              ),
             );
           },
         ),
@@ -287,9 +291,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
           icon: Icons.comment_outlined,
           title: '내가 쓴 댓글',
           onTap: () {
-            // TODO: 내가 쓴 댓글 화면으로 이동
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('내가 쓴 댓글 기능은 준비 중입니다.')),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MyCommentsScreen(),
+              ),
             );
           },
         ),

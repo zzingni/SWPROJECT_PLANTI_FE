@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/post.dart' show Post, PostListResponse, PostDetail, Comment;
+import '../models/post.dart' show Post, PostListResponse, PostDetail, Comment, MyPost, MyComment;
 
 /// JWT 토큰에서 사용자 ID를 추출하는 유틸리티 함수
 int? extractUserIdFromToken(String token) {
@@ -235,6 +235,50 @@ class PostService {
     }
   }
 
+  Future<void> updateComment({
+    required int commentId,
+    required String content,
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/comments/$commentId');
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    final body = jsonEncode({
+      'content': content,
+    });
+
+    try {
+      final resp = await _client.put(uri, headers: headers, body: body).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      // 디버그 로깅
+      print('댓글 수정 API 요청 URL: $uri');
+      print('요청 본문: $body');
+      print('응답 상태 코드: ${resp.statusCode}');
+
+      if (resp.statusCode != 200 && resp.statusCode != 204) {
+        final errorBody = _peek(resp.body);
+        print('에러 응답 본문: $errorBody');
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+    } catch (e) {
+      print('댓글 수정 에러: $e');
+      rethrow;
+    }
+  }
+
   Future<void> createComment({
     required int postId,
     required String content,
@@ -287,51 +331,6 @@ class PostService {
       }
     } catch (e) {
       print('댓글 작성 에러: $e');
-      rethrow;
-    }
-  }
-
-
-  Future<void> updateComment({
-    required int commentId,
-    required String content,
-    String? accessToken,
-  }) async {
-    final uri = Uri.parse('$baseUrl/api/comments/$commentId');
-
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    if (accessToken != null) {
-      headers['Authorization'] = 'Bearer $accessToken';
-    }
-
-    final body = jsonEncode({
-      'content': content,
-    });
-
-    try {
-      final resp = await _client.put(uri, headers: headers, body: body).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
-        },
-      );
-
-      // 디버그 로깅
-      print('댓글 수정 API 요청 URL: $uri');
-      print('요청 본문: $body');
-      print('응답 상태 코드: ${resp.statusCode}');
-
-      if (resp.statusCode != 200 && resp.statusCode != 204) {
-        final errorBody = _peek(resp.body);
-        print('에러 응답 본문: $errorBody');
-        throw Exception('HTTP ${resp.statusCode}: $errorBody');
-      }
-    } catch (e) {
-      print('댓글 수정 에러: $e');
       rethrow;
     }
   }
@@ -458,9 +457,8 @@ class PostService {
     }
   }
 
-
   /// 게시글 좋아요 토글
-  /// 좋아요를 누르면 좋아요가 추가되고, 이미 좋아요를 눌렀다면 취소.
+  /// 좋아요를 누르면 좋아요가 추가되고, 이미 좋아요를 눌렀다면 취소됩니다.
   Future<void> toggleLike({
     required int postId,
     String? accessToken,
@@ -512,6 +510,88 @@ class PostService {
       }
     } catch (e) {
       print('좋아요 토글 에러: $e');
+      rethrow;
+    }
+  }
+
+  /// 내가 쓴 게시글 조회
+  Future<List<MyPost>> fetchMyPosts({
+    String? accessToken,
+  }) async {
+    if (accessToken == null) {
+      throw Exception('로그인이 필요합니다.');
+    }
+
+    // @RequestMapping("/api/posts") + @GetMapping("/my/posts") = /api/posts/my/posts
+    final uri = Uri.parse('$baseUrl/api/posts/my/posts');
+
+    final headers = <String, String>{
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+    };
+
+    try {
+      final resp = await _client.get(uri, headers: headers).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      if (resp.statusCode != 200) {
+        final errorBody = _peek(resp.body);
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+
+      if (resp.body.isEmpty) {
+        return [];
+      }
+
+      final List<dynamic> jsonList = jsonDecode(resp.body) as List<dynamic>;
+      return jsonList.map((x) => MyPost.fromJson(x as Map<String, dynamic>)).toList();
+    } catch (e) {
+      print('내가 쓴 게시글 조회 에러: $e');
+      rethrow;
+    }
+  }
+
+  /// 내가 쓴 댓글 조회
+  Future<List<MyComment>> fetchMyComments({
+    String? accessToken,
+  }) async {
+    if (accessToken == null) {
+      throw Exception('로그인이 필요합니다.');
+    }
+
+    // @RequestMapping("/api/posts") + @GetMapping("/my/comments") = /api/posts/my/comments
+    final uri = Uri.parse('$baseUrl/api/posts/my/comments');
+
+    final headers = <String, String>{
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+    };
+
+    try {
+      final resp = await _client.get(uri, headers: headers).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.');
+        },
+      );
+
+      if (resp.statusCode != 200) {
+        final errorBody = _peek(resp.body);
+        throw Exception('HTTP ${resp.statusCode}: $errorBody');
+      }
+
+      if (resp.body.isEmpty) {
+        return [];
+      }
+
+      final List<dynamic> jsonList = jsonDecode(resp.body) as List<dynamic>;
+      return jsonList.map((x) => MyComment.fromJson(x as Map<String, dynamic>)).toList();
+    } catch (e) {
+      print('내가 쓴 댓글 조회 에러: $e');
       rethrow;
     }
   }

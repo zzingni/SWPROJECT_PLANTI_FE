@@ -69,6 +69,7 @@ class Comment {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final bool owner; // 댓글 작성자인지 여부
+  final int? postId; // 게시글 ID (내가 쓴 댓글 조회 시 필요)
 
   Comment({
     required this.commentId,
@@ -78,6 +79,7 @@ class Comment {
     required this.createdAt,
     this.updatedAt,
     required this.owner,
+    this.postId,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
@@ -91,6 +93,58 @@ class Comment {
           ? DateTime.parse(json['updatedAt'] as String)
           : null,
       owner: json['owner'] as bool,
+      postId: json['postId'] as int?,
+    );
+  }
+}
+
+// 내가 쓴 게시글 DTO
+class MyPost {
+  final int postId;
+  final String boardName;
+  final String title;
+  final DateTime createdAt;
+
+  MyPost({
+    required this.postId,
+    required this.boardName,
+    required this.title,
+    required this.createdAt,
+  });
+
+  factory MyPost.fromJson(Map<String, dynamic> json) {
+    return MyPost(
+      postId: json['postId'] as int,
+      boardName: json['boardName'] as String,
+      title: json['title'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+}
+
+// 내가 쓴 댓글 DTO
+class MyComment {
+  final int commentId;
+  final int postId;
+  final String postTitle;
+  final String content;
+  final DateTime createdAt;
+
+  MyComment({
+    required this.commentId,
+    required this.postId,
+    required this.postTitle,
+    required this.content,
+    required this.createdAt,
+  });
+
+  factory MyComment.fromJson(Map<String, dynamic> json) {
+    return MyComment(
+      commentId: json['commentId'] as int,
+      postId: json['postId'] as int,
+      postTitle: json['postTitle'] as String,
+      content: json['content'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
 }
