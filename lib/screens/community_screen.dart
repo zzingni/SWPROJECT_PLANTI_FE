@@ -609,16 +609,19 @@ class InformationBoardTab extends StatelessWidget {
         'title': '브라더가든',
         'description': '그린 스타일링, 식물 인테리어에 관심이 있다면 방문해 보세요!',
         'tags': ['인테리어', '배달', '매거진'],
+        'url': 'https://brother-garden.co.kr/',
       },
       {
         'title': '선데이플래닛47',
         'description': '실내식물 케어에 관심이 있다면 방문해 보세요!',
         'tags': ['영양제', '관리용품'],
+        'url': 'https://sundayplanet47.com/',
       },
       {
         'title': '어플라워가드닝',
         'description': '다양한 흙자재와 씨앗을 구매하고 싶다면 방문해 보세요!',
         'tags': ['분갈이', '흙자재', '씨앗'],
+        'url': 'https://aflowergardening.com/',
       },
     ];
 
@@ -630,8 +633,9 @@ class InformationBoardTab extends StatelessWidget {
   Widget _buildInfoCard(Map<String, dynamic> card) {
     return GestureDetector(
       onTap: () async {
-        // 카드 클릭 시 링크 열기 (실제 URL은 관리자가 설정)
-        final uri = Uri.parse('https://example.com/${card['title']}');
+        // 카드 클릭 시 링크 열기
+        final url = card['url'] as String;
+        final uri = Uri.parse(url);
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
