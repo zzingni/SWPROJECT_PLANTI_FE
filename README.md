@@ -1,16 +1,103 @@
-# fe
+# 🌱 Planti  
+> 스마트 식물 관리 서비스  
+관수 주기와 식물 환경 데이터를 기반으로 반려식물을 더 잘 키우기 위한 올인원 관리 플랫폼
 
-A new Flutter project.
+---
 
-## Getting Started
+## 📌 프로젝트 소개
+Planti는 반려식물을 키우는 과정에서 발생하는  
+관수 시기 혼동, 환경 관리의 어려움, 관리 기록의 부재 문제를 해결하기 위해 시작된 프로젝트다.
 
-This project is a starting point for a Flutter application.
+온·습도 센서와 연동하여 식물의 상태를 확인하고,  
+관수 알림과 관리 기록을 통해 식물을 체계적으로 관리할 수 있도록 돕는다.
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🎯 개발 목적
+- 식물 종류별 관수 주기 관리 자동화
+- 센서 데이터를 활용한 환경 모니터링
+- 관수 이력 및 관리 기록을 통한 식물 성장 관리
+- 사용자 친화적인 UI/UX로 식물 관리 접근성 향상
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## ✨ 주요 기능
+- 🔔 관수 알림  
+  - 관수 주기 도래 시 푸시 알림 제공  
+  - 알림 수신 후 관수 여부 선택 (예 / 아니오)
+
+- 🌡️ 환경 모니터링  
+  - 온도 / 습도 센서 데이터 수집  
+  - 식물 생육 환경 확인
+
+- 🌿 식물 관리  
+  - 사용자별 식물 등록  
+  - 식물 정보 및 관리 상태 확인
+
+- 🔍 식물 검색  
+  - 식물 이름 기반 검색  
+  - 식물별 기본 정보 및 관리 방법 제공
+
+- 💬 커뮤니티  
+  - 식물 관련 정보 공유  
+  - 식물 관리 경험 및 팁 소통
+ 
+- 📊 관수 이력 관리  
+  - 관수 여부 기록  
+  - 날짜별 관수 히스토리 확인
+
+- 🔐 회원 관리  
+  - 회원가입  
+  - 사용자 기반 데이터 관리
+
+---
+
+## 🧩 시스템 구성 개요
+- 하드웨어(센서) → 백엔드 서버로 환경 데이터 전송  
+- 백엔드에서 데이터 저장 및 관수 주기 판단  
+- 필요 시 FCM을 통해 사용자에게 푸시 알림 전송  
+- 프론트엔드 앱에서 식물 상태 및 관리 정보 시각화  
+
+---
+
+# 🖥 Frontend
+
+## 역할
+- 사용자와 직접 상호작용하는 화면 제공
+- 식물 정보, 관수 상태, 알림 결과 시각화
+- 사용자 입력 기반 식물 관리 기능 제공
+
+## 기술 환경
+- **Framework**: Flutter
+- **Language**: Dart
+- **IDE**: Android Studio
+- **UI**: 위젯(Widget) 기반 UI 구성
+- **State Management**: Provider
+- **Communication**: REST API
+
+---
+
+# ⚙️ Backend
+
+## 역할
+- 사용자 및 식물 데이터 관리
+- 관수 주기 로직 처리
+- 센서 데이터 저장 및 분석
+- 푸시 알림(Firebase Cloud Messaging) 전송
+
+## 기술 환경
+- **Language**: Java
+- **Framework**: Spring Boot
+- **Database**: PostgreSQL
+- **ORM**: JPA / Hibernate
+- **External**: Firebase Cloud Messaging (FCM), Nongsaro API, OpenAI API
+- **Build Tool**: Gradle
+- **IDE**: IntelliJ IDEA
+
+---
+
+## 📂 프로젝트 특징
+- 도메인 중심 패키지 구조 설계
+- 확장 가능한 아키텍처 고려
+- 하드웨어 연동을 고려한 서버 설계
+- 추후 상업화(광고, 프리미엄 기능 등) 확장 가능 구조
