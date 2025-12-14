@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fe/core/token_storage.dart';
+import 'package:fe/screens/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -214,17 +215,13 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
               ),
             );
 
+
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(
-                builder: (context) =>
-                    HomeScreen(
-                      plantId: widget.selectedPlantId,
-                      nickname: widget.nickname, // 그대로
-                      wateringCycle: _convertScheduleToBackendFormat(_selectedSchedule ?? ''),
-                      optimalTemperature: 25,
-                      optimalHumidity: 43,
-                      tokenStorage: widget.tokenStorage, // 기존 tokenStorage 사용
-                    ),
+                builder: (_) => MainNavigationScreen(
+                  tokenStorage: widget.tokenStorage,
+                  initialIndex: 0, // 홈 탭
+                ),
               ),
                   (route) => false,
             );
@@ -241,16 +238,10 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
 
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(
-                builder: (context) =>
-                    HomeScreen(
-                      plantId: widget.selectedPlantId,
-                      nickname: widget.nickname,
-                      wateringCycle: _convertScheduleToBackendFormat(
-                          _selectedSchedule),
-                      optimalTemperature: 25,
-                      optimalHumidity: 43,
-                      tokenStorage: TokenStorage(),
-                    ),
+                builder: (_) => MainNavigationScreen(
+                  tokenStorage: widget.tokenStorage,
+                  initialIndex: 0, // 홈 탭
+                ),
               ),
                   (route) => false,
             );

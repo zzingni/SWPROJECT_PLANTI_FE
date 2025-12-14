@@ -38,6 +38,7 @@ class PushNotificationService {
   GlobalKey<NavigatorState>? _navigatorKey;
   OverlayEntry? _bannerEntry;
   Timer? _dismissTimer;
+  VoidCallback? _onWateringNotificationReceived;
 
   Future<void> init(GlobalKey<NavigatorState> navigatorKey) async {
     print('>>> PushNotificationService.init start');
@@ -83,11 +84,24 @@ class PushNotificationService {
     }
   }
 
+  // 물주기 알림 콜백 등록
+  void setOnWateringNotificationReceived(VoidCallback callback) {
+    _onWateringNotificationReceived = callback;
+  }
+
   // 공개된 핸들러: 외부에서 메시지를 위임할 때도 사용하도록 함
   void handleForegroundMessage(RemoteMessage message) {
     print('>>> handleForegroundMessage called');
     _showSystemNotification(message);
     _showBanner(message);
+
+    // 물주기 알림인지 확인하고 콜백 호출
+    final notificationType = message.data['type'] as String?;
+    if (notificationType == 'watering' ||
+        message.notification?.title?.contains('물') == true ||
+        message.data['title']?.toString().contains('물') == true) {
+      _onWateringNotificationReceived?.call();
+    }
   }
 
   Future<void> _ensureFirebaseInitialized() async {
