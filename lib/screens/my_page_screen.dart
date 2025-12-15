@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:fe/core/token_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/post_service.dart';
 import 'chatbot_screen.dart';
 import 'watering_history_screen.dart';
 import 'my_posts_screen.dart';
 import 'my_comments_screen.dart';
+import 'main_screen.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -96,16 +98,20 @@ class _MyPageScreenState extends State<MyPageScreen> {
     if (confirmed != true) return;
 
     try {
-      // TODO: TokenStorage.clearTokens() 메서드가 있다면 사용
-      // 토큰 삭제는 SharedPreferences에서 직접 삭제하거나
-      // TokenStorage에 clearTokens 메서드가 있다면 사용
+      // 토큰 삭제
+      const storage = FlutterSecureStorage();
+      await storage.delete(key: 'accessToken');
+      await storage.delete(key: 'refreshToken');
 
       if (!mounted) return;
 
-      // 로그인 화면으로 이동
-      // 모든 화면을 제거하고 루트로 이동
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      // 또는 Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      // 모든 화면을 제거하고 main_screen의 AuthScreen(3번째 화면)으로 이동
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const AuthScreen(),
+        ),
+            (route) => false,
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
