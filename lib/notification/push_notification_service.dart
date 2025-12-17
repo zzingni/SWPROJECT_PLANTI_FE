@@ -24,16 +24,10 @@ const AndroidNotificationChannel _plantNotificationChannel = AndroidNotification
 final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
 FlutterLocalNotificationsPlugin();
 
-@pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  await PushNotificationService.instance._showSystemNotification(message);
-}
-
 class PushNotificationService {
   PushNotificationService._();
   static final PushNotificationService instance = PushNotificationService._();
-
+  static bool _inited = false;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   GlobalKey<NavigatorState>? _navigatorKey;
   OverlayEntry? _bannerEntry;
@@ -41,6 +35,9 @@ class PushNotificationService {
   VoidCallback? _onWateringNotificationReceived;
 
   Future<void> init(GlobalKey<NavigatorState> navigatorKey) async {
+    if (_inited) return;
+    _inited = true;
+
     print('>>> PushNotificationService.init start');
     _navigatorKey = navigatorKey;
 
@@ -79,7 +76,7 @@ class PushNotificationService {
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
       print('>>> PushNotificationService: initialMessage present: ${initialMessage.data}');
-      await _showSystemNotification(initialMessage);
+      await showSystemNotification(initialMessage);
       _navigateByMessage(initialMessage);
     }
   }
@@ -92,7 +89,7 @@ class PushNotificationService {
   // 공개된 핸들러: 외부에서 메시지를 위임할 때도 사용하도록 함
   void handleForegroundMessage(RemoteMessage message) {
     print('>>> handleForegroundMessage called');
-    _showSystemNotification(message);
+    showSystemNotification(message);
     _showBanner(message);
 
     // 물주기 알림인지 확인하고 콜백 호출
@@ -135,12 +132,11 @@ class PushNotificationService {
     await androidPlugin?.createNotificationChannel(_plantNotificationChannel);
   }
 
-  Future<void> _showSystemNotification(RemoteMessage message) async {
+  Future<void> showSystemNotification(RemoteMessage message) async {
     final notification = message.notification;
     final title = notification?.title ?? message.data['title'] ?? '반려식물 알림';
     final body = notification?.body ?? message.data['body'] ?? '반려식물에게 물을 주세요!';
     final payload = message.data.isEmpty ? null : jsonEncode(message.data);
-    print('알림 호출!');
 
     final androidDetails = AndroidNotificationDetails(
       _plantNotificationChannel.id,

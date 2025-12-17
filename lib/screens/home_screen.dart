@@ -5,9 +5,6 @@ import 'package:fe/core/token_storage.dart';
 import 'package:fe/screens/plant_selection_screen.dart';
 import 'package:flutter/material.dart';
 
-
-
-
 class HomeScreen extends StatefulWidget {
   final int? plantId;
   final String? nickname;
@@ -431,165 +428,180 @@ class _PlantWateringPromptCard extends StatelessWidget {
           const SizedBox(height: 20),
 
           // 물주기 프롬프트 캐릭터 (목이 마른 상태)
+          // SizedBox(
+          //   height: 280,
+          //   child: Stack(
+          //     alignment: Alignment.center,
+          //     children: [
+          //       // 물뿌리개와 물방울 (왼쪽 위)
+          //       Positioned(
+          //         top: 20,
+          //         left: 30,
+          //         child: Column(
+          //           children: [
+          //             // 물뿌리개
+          //             Container(
+          //               width: 35,
+          //               height: 35,
+          //               decoration: BoxDecoration(
+          //                 color: const Color(0xFF87CEEB),
+          //                 borderRadius: BorderRadius.circular(6),
+          //               ),
+          //               child: const Icon(
+          //                 Icons.water_drop,
+          //                 color: Colors.white,
+          //                 size: 20,
+          //               ),
+          //             ),
+          //             const SizedBox(height: 6),
+          //             // 물방울
+          //             Container(
+          //               width: 10,
+          //               height: 10,
+          //               decoration: const BoxDecoration(
+          //                 color: Color(0xFF87CEEB),
+          //                 shape: BoxShape.circle,
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //       // 목이 마른 캐릭터
+          //       Positioned(
+          //         child: Column(
+          //           mainAxisSize: MainAxisSize.min,
+          //           children: [
+          //             // 잎사귀 (머리 위)
+          //             Row(
+          //               mainAxisSize: MainAxisSize.min,
+          //               children: [
+          //                 Container(
+          //                   width: 25,
+          //                   height: 25,
+          //                   decoration: BoxDecoration(
+          //                     color: const Color(0xFF4F7F43),
+          //                     borderRadius: BorderRadius.circular(12),
+          //                   ),
+          //                 ),
+          //                 const SizedBox(width: 8),
+          //                 Container(
+          //                   width: 25,
+          //                   height: 25,
+          //                   decoration: BoxDecoration(
+          //                     color: const Color(0xFF4F7F43),
+          //                     borderRadius: BorderRadius.circular(12),
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //             const SizedBox(height: 4),
+          //             // 식물 몸통 (연한 초록색 구체)
+          //             Container(
+          //               width: 140,
+          //               height: 140,
+          //               decoration: BoxDecoration(
+          //                 color: const Color(0xFFB8E6B8),
+          //                 shape: BoxShape.circle,
+          //               ),
+          //               child: Stack(
+          //                 alignment: Alignment.center,
+          //                 children: [
+          //                   // 큰 눈들
+          //                   Positioned(
+          //                     top: 35,
+          //                     child: Row(
+          //                       mainAxisSize: MainAxisSize.min,
+          //                       children: [
+          //                         Container(
+          //                           width: 18,
+          //                           height: 18,
+          //                           decoration: const BoxDecoration(
+          //                             color: Colors.black,
+          //                             shape: BoxShape.circle,
+          //                           ),
+          //                         ),
+          //                         const SizedBox(width: 25),
+          //                         Container(
+          //                           width: 18,
+          //                           height: 18,
+          //                           decoration: const BoxDecoration(
+          //                             color: Colors.black,
+          //                             shape: BoxShape.circle,
+          //                           ),
+          //                         ),
+          //                       ],
+          //                     ),
+          //                   ),
+          //                   // 볼 (분홍색)
+          //                   Positioned(
+          //                     top: 55,
+          //                     child: Row(
+          //                       mainAxisSize: MainAxisSize.min,
+          //                       children: [
+          //                         Container(
+          //                           width: 10,
+          //                           height: 10,
+          //                           decoration: const BoxDecoration(
+          //                             color: Color(0xFFFFB6C1),
+          //                             shape: BoxShape.circle,
+          //                           ),
+          //                         ),
+          //                         const SizedBox(width: 35),
+          //                         Container(
+          //                           width: 10,
+          //                           height: 10,
+          //                           decoration: const BoxDecoration(
+          //                             color: Color(0xFFFFB6C1),
+          //                             shape: BoxShape.circle,
+          //                           ),
+          //                         ),
+          //                       ],
+          //                     ),
+          //                   ),
+          //                   // 입 (목이 마른 표정 - 열린 입)
+          //                   Positioned(
+          //                     top: 70,
+          //                     child: Container(
+          //                       width: 24,
+          //                       height: 16,
+          //                       decoration: BoxDecoration(
+          //                         color: Colors.black,
+          //                         borderRadius: BorderRadius.circular(12),
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+          //             const SizedBox(height: 8),
+          //             // 화분 (오렌지색)
+          //             Container(
+          //               width: 110,
+          //               height: 55,
+          //               decoration: BoxDecoration(
+          //                 color: const Color(0xFFFFA500),
+          //                 borderRadius: BorderRadius.circular(8),
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
           SizedBox(
             height: 280,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // 물뿌리개와 물방울 (왼쪽 위)
-                Positioned(
-                  top: 20,
-                  left: 30,
-                  child: Column(
-                    children: [
-                      // 물뿌리개
-                      Container(
-                        width: 35,
-                        height: 35,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF87CEEB),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(
-                          Icons.water_drop,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      // 물방울
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF87CEEB),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // 목이 마른 캐릭터
-                Positioned(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // 잎사귀 (머리 위)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 25,
-                            height: 25,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4F7F43),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 25,
-                            height: 25,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4F7F43),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      // 식물 몸통 (연한 초록색 구체)
-                      Container(
-                        width: 140,
-                        height: 140,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFB8E6B8),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // 큰 눈들
-                            Positioned(
-                              top: 35,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 18,
-                                    height: 18,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 25),
-                                  Container(
-                                    width: 18,
-                                    height: 18,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // 볼 (분홍색)
-                            Positioned(
-                              top: 55,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFFFB6C1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 35),
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFFFB6C1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // 입 (목이 마른 표정 - 열린 입)
-                            Positioned(
-                              top: 70,
-                              child: Container(
-                                width: 24,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // 화분 (오렌지색)
-                      Container(
-                        width: 110,
-                        height: 55,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFA500),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            child: Image.asset(
+              'assets/images/water.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                print('이미지 로드 에러: $error');
+                return const Icon(
+                  Icons.eco_rounded,
+                  size: 60,
+                  color: Color(0xFF4F7F43),
+                );
+              },
             ),
           ),
 

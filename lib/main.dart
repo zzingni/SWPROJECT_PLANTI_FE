@@ -18,8 +18,8 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // 백그라운드에서 수신한 메시지 처리
-  print('백그라운드 메시지 수신: ${message.messageId}');
+  await Firebase.initializeApp();
+  await PushNotificationService.instance.showSystemNotification(message);
 }
 
 void main() async {
@@ -42,6 +42,10 @@ void main() async {
       home: MainScreen(),
     ),
   );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await PushNotificationService.instance.init(navigatorKey);
+  });
 
   print('>>> main: calling PushNotificationService.init');
   await PushNotificationService.instance.init(navigatorKey);
