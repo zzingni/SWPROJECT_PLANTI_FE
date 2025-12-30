@@ -204,8 +204,15 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
         try {
           final responseData = jsonDecode(response.body) as Map<String,
               dynamic>;
+          // 백엔드 응답: companionPlantId, plantId, nickname, wateringCycle
+          final companionPlantId = responseData['companionPlantId'] as int?;
+          final plantId = responseData['plantId'] as int?;
           final nickname = responseData['nickname'] as String? ??
               widget.nickname;
+          final wateringCycle = responseData['wateringCycle'] as String?;
+
+          // 디버그 로그 (필요시 제거)
+          print('반려식물 추가 성공: companionPlantId=$companionPlantId, plantId=$plantId, nickname=$nickname, wateringCycle=$wateringCycle');
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -277,7 +284,7 @@ class _PlantWateringScheduleScreenState extends State<PlantWateringScheduleScree
   }
 
   Future<http.Response> _sendPlantDataToBackend(
-    Map<String, dynamic> plantData) async {
+      Map<String, dynamic> plantData) async {
     const String apiUrl = 'http://10.0.2.2:8080/api/user-plants';
     final jsonBody = jsonEncode(plantData);
     print('SEND /api/user-plants body: $jsonBody');
