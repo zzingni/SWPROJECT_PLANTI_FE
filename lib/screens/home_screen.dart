@@ -13,6 +13,7 @@ class HomeScreen extends StatefulWidget {
   final int? optimalHumidity;
   final TokenStorage tokenStorage;
 
+
   const HomeScreen({
     super.key,
     this.plantId,
@@ -35,6 +36,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   bool showWateringPrompt = false;
   bool _saving = false;
+  int? currentTemp;
+  int? currentHumid;
+  bool envLoading = false;
 
   @override
   void initState() {
@@ -42,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchPlantInfo();
     // FCM 알림 리스너 등록
     _setupNotificationListener();
+    _fetchLatestEnvironment();
   }
 
   void _setupNotificationListener() {
@@ -64,6 +69,35 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         showWateringPrompt = false;
       });
+    }
+  }
+
+  // 마지막 환경 정보 불러오기
+  Future<void> _fetchLatestEnvironment() async {
+    if (envLoading) return;
+    setState(() => envLoading = true);
+
+    try {
+      final res = await http.get(
+        Uri.parse('http://10.0.2.2:8080/api/environments/latest'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        if (!mounted) return;
+
+        setState(() {
+          currentTemp = (data['temperature'] as num?)?.round();
+          currentHumid = (data['humidity'] as num?)?.round();
+        });
+      } else {
+        debugPrint('GET latest env failed: ${res.statusCode} ${res.body}');
+      }
+    } catch (e) {
+      debugPrint('GET latest env error: $e');
+    } finally {
+      if (mounted) setState(() => envLoading = false);
     }
   }
 
@@ -242,6 +276,19 @@ class _HomeScreenState extends State<HomeScreen> {
         foregroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: envLoading ? null : _fetchLatestEnvironment,
+            icon: envLoading
+                ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+                : const Icon(Icons.refresh),
+            tooltip: '환경 정보 새로고침',
+          ),
+        ],
       ),
       body: Container(
         color: const Color(0xFFF8F9FA),
@@ -264,8 +311,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
               // 환경 정보 카드들
               _EnvironmentCards(
-                temperature: widget.optimalTemperature ?? 25,
-                humidity: widget.optimalHumidity ?? 43,
+                // 불러온 환경정보 없으면 디폴트 값 대체
+                temperature: currentTemp ?? (widget.optimalTemperature ?? 25),
+                humidity: currentHumid ?? (widget.optimalHumidity ?? 43),
               ),
               const SizedBox(height: 20),
             ],
