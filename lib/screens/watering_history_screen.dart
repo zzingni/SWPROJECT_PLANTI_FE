@@ -1,17 +1,33 @@
+import 'dart:convert';
+
+import 'package:fe/core/token_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-// 물주기 알림 이력 모델
-class WateringNotificationHistory {
-  final DateTime notificationDate; // 알림을 받은 날짜
-  final bool isWatered; // 물을 줬는지 여부
-  final DateTime? wateredAt; // 물을 준 시간 (null이면 안 줌)
+// 물주기 이력 모델 (백엔드 응답을 유연하게 파싱)
+class WateringHistoryItem {
+  final DateTime wateringDate;
+  final String wateringStatus; // "완료" / "미완료"
 
-  WateringNotificationHistory({
-    required this.notificationDate,
-    required this.isWatered,
-    this.wateredAt,
+  WateringHistoryItem({
+    required this.wateringDate,
+    required this.wateringStatus,
   });
+
+  bool get isWatered => wateringStatus == '완료';
+
+  factory WateringHistoryItem.fromJson(Map<String, dynamic> json) {
+    DateTime _parseDate(dynamic value) {
+      if (value == null) return DateTime.now();
+      return DateTime.parse(value.toString());
+    }
+
+    return WateringHistoryItem(
+      wateringDate: _parseDate(json['wateringDate']),
+      wateringStatus: (json['wateringStatus'] ?? '미완료').toString(),
+    );
+  }
 }
 
 class WateringHistoryScreen extends StatefulWidget {
@@ -22,41 +38,95 @@ class WateringHistoryScreen extends StatefulWidget {
 }
 
 class _WateringHistoryScreenState extends State<WateringHistoryScreen> {
-  List<WateringNotificationHistory> _historyList = [];
+  List<WateringHistoryItem> _historyList = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadDummyData();
+    _fetchHistory();
   }
 
-  // 더미데이터 생성
-  void _loadDummyData() {
-    final now = DateTime.now();
-    final List<WateringNotificationHistory> dummyList = [];
-
-    // 최근 30일간의 더미데이터 생성
-    for (int i = 0; i < 30; i++) {
-      final date = now.subtract(Duration(days: i));
-      // 3일마다 알림이 온다고 가정
-      if (i % 3 == 0) {
-        // 물을 준 경우와 안 준 경우를 랜덤하게
-        final isWatered = i % 2 == 0;
-        dummyList.add(
-          WateringNotificationHistory(
-            notificationDate: date,
-            isWatered: isWatered,
-            wateredAt: isWatered
-                ? date.add(const Duration(hours: 2, minutes: 30))
-                : null,
-          ),
-        );
-      }
-    }
-
+  Future<void> _fetchHistory() async {
     setState(() {
-      _historyList = dummyList;
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final token = await TokenStorage.accessToken;
+      if (token == null || token.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '로그인이 필요합니다.';
+        });
+        return;
+      }
+
+      final companionPlantId = await _fetchCompanionPlantId(token);
+      if (companionPlantId == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '반려식물 정보를 불러올 수 없습니다.';
+        });
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:8080/api/watering/history?companionPlantId=$companionPlantId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
+        final history = data
+            .map((e) => WateringHistoryItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        setState(() {
+          _historyList = history;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '이력 조회 실패 (${response.statusCode})';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = '이력 조회 중 오류가 발생했습니다: $e';
+      });
+    }
+  }
+
+  // 사용자 반려식물 목록 중 첫 번째 companionPlantId를 조회
+  Future<int?> _fetchCompanionPlantId(String token) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/api/user-plants'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) return null;
+
+    final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
+    if (data.isEmpty) return null;
+
+    final first = data.first as Map<String, dynamic>;
+    final id = first['companionPlantId'] ?? first['id'];
+
+    if (id is int) return id;
+    if (id is String) return int.tryParse(id);
+    return null;
   }
 
   @override
@@ -76,8 +146,33 @@ class _WateringHistoryScreenState extends State<WateringHistoryScreen> {
         ),
         centerTitle: true,
       ),
-      body: _historyList.isEmpty
-          ? Center(
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            _errorMessage!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.red,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_historyList.isEmpty) {
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -104,26 +199,24 @@ class _WateringHistoryScreenState extends State<WateringHistoryScreen> {
             ),
           ],
         ),
-      )
-          : ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _historyList.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final history = _historyList[index];
-          return _buildHistoryItem(history);
-        },
-      ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: _historyList.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final history = _historyList[index];
+        return _buildHistoryItem(history);
+      },
     );
   }
 
-  Widget _buildHistoryItem(WateringNotificationHistory history) {
+  Widget _buildHistoryItem(WateringHistoryItem history) {
     final dateFormat = DateFormat('yyyy년 M월 d일 (E)', 'ko_KR');
     final timeFormat = DateFormat('HH:mm', 'ko_KR');
-    final isToday = isSameDay(history.notificationDate, DateTime.now());
-    final isPast = history.notificationDate.isBefore(
-      DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0),
-    );
+    final isToday = _isSameDay(history.wateringDate, DateTime.now());
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -175,7 +268,7 @@ class _WateringHistoryScreenState extends State<WateringHistoryScreen> {
                 Row(
                   children: [
                     Text(
-                      dateFormat.format(history.notificationDate),
+                      dateFormat.format(history.wateringDate),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -206,23 +299,6 @@ class _WateringHistoryScreenState extends State<WateringHistoryScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.notifications_outlined,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '알림 받은 날짜',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 4),
                 if (history.isWatered) ...[
                   Row(
@@ -234,8 +310,8 @@ class _WateringHistoryScreenState extends State<WateringHistoryScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        history.wateredAt != null
-                            ? '물주기 완료 (${timeFormat.format(history.wateredAt!)})'
+                        history.wateringDate != null
+                            ? '물주기 완료 (${timeFormat.format(history.wateringDate!)})'
                             : '물주기 완료',
                         style: const TextStyle(
                           fontSize: 13,
@@ -296,7 +372,7 @@ class _WateringHistoryScreenState extends State<WateringHistoryScreen> {
     );
   }
 
-  bool isSameDay(DateTime date1, DateTime date2) {
+  bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
         date1.month == date2.month &&
         date1.day == date2.day;

@@ -31,8 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String? nickname;
   int? optimalTemperature;
   int? optimalHumidity;
+  int? companionPlantId;
   bool isLoading = true;
   bool showWateringPrompt = false;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -65,43 +67,155 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _saveWateringHistory(String wateringStatus) async {
+    if (_saving) return;
+
+    final token = await TokenStorage.accessToken;
+    if (token == null || token.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final id = companionPlantId ?? await _fetchCompanionPlantId(token);
+    if (id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('반려식물 ID를 찾을 수 없습니다.'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+
+    try {
+      final res = await http.post(
+        Uri.parse('http://10.0.2.2:8080/api/watering/history'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'companionPlantId': id,
+          'wateringStatus': wateringStatus, // "완료" or "미완료"
+        }),
+      );
+
+      debugPrint('POST /api/watering/history => ${res.statusCode} ${res.body}');
+
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        hideWateringPromptCard();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(wateringStatus == '완료' ? '물주기가 완료되었습니다.' : '물주기가 미완료 되었어요.'),
+            backgroundColor: const Color(0xFF4F7F43),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('저장 실패 (${res.statusCode}) ${res.body}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('저장 중 오류: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Future<void> _fetchPlantInfo() async {
     try {
       // 토큰 가져오기
       final token = await TokenStorage.accessToken;
-      if (token == null) {
+      if (token == null || token.isEmpty) {
         print('토큰 없음');
-        setState(() {
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
         return;
       }
 
-      // API 호출
+      // 1) 반려식물 기본 정보(닉네임) 조회
       final response = await http.get(
         Uri.parse('http://10.0.2.2:8080/api/user/plant'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final decoded = jsonDecode(response.body);
 
-        setState(() {
-          nickname = data['nickname']; // 백엔드 구조에 맞게
-          isLoading = false;
-        });
+        String? fetchedNickname;
+
+        // 응답이 Map인 경우
+        if (decoded is Map<String, dynamic>) {
+          fetchedNickname = decoded['nickname'] as String?;
+        }
+
+        // 응답이 List인 경우
+        else if (decoded is List && decoded.isNotEmpty) {
+          final first = decoded.first;
+          if (first is Map<String, dynamic>) {
+            fetchedNickname = first['nickname'] as String?;
+          }
+        }
+
+        // 2) companionPlantId도 같이 확보(물주기 이력 저장/조회용)
+        final id = await _fetchCompanionPlantId(token);
+
+        if (mounted) {
+          setState(() {
+            nickname = fetchedNickname;
+            companionPlantId = id;
+            isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          isLoading = false;
-        });
-        print('반려식물 정보 조회 실패: ${response.statusCode}');
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+        print('반려식물 정보 조회 실패: ${response.statusCode} / ${response.body}');
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
       print('반려식물 정보 조회 중 에러: $e');
     }
+  }
+
+
+
+  Future<int?> _fetchCompanionPlantId(String token) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/api/user-plants'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) return null;
+
+    final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
+    if (data.isEmpty) return null;
+
+    final first = data.first as Map<String, dynamic>;
+    final id = first['companionPlantId'] ?? first['id'];
+
+    if (id is int) return id;
+    if (id is String) return int.tryParse(id);
+    return null;
   }
 
 
@@ -139,16 +253,14 @@ class _HomeScreenState extends State<HomeScreen> {
               showWateringPrompt
                   ? _PlantWateringPromptCard(
                 nickname: nickname!,
-                onYes: () {
-                  // 물주기 확인 처리
-                  hideWateringPromptCard();
-                  // TODO: 물주기 기록 API 호출
+                onYes: () async {
+                  await _saveWateringHistory('완료');
                 },
-                onNo: hideWateringPromptCard,
+                onNo: () async {
+                  await _saveWateringHistory('미완료');
+                },
               )
-                  : _PlantMainCard(
-                nickname: nickname!,
-              ),
+                  : _PlantMainCard(nickname: nickname!),
               const SizedBox(height: 20),
               // 환경 정보 카드들
               _EnvironmentCards(
